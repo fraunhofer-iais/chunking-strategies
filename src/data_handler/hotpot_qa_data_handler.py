@@ -17,7 +17,7 @@ class HotpotQADataHandler(DataHandler):
 
     dataset_name : str = "TIGER-Lab/LongRAG"
     subset: str = "hotpot_qa"
-    split: Literal["full", "subset_1000"] = "full"  # "full" | "subset_1000"
+    split: Literal["full", "subset_1000"] = "full"
 
     def load_data(self) -> list[EvalSample]:
         dataset = load_dataset(self.dataset_name, name=self.subset, split=self.split, streaming=True)
