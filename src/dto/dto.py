@@ -3,10 +3,16 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class Span(BaseModel):
+    start: int
+    end: int
+
+
 class Answer(BaseModel):
     answer: str
     start: Optional[int] = None
     end: Optional[int] = None
+    spans: Optional[list[Span]] = None
 
 
 class EvalSample(BaseModel):
