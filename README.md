@@ -45,3 +45,14 @@ This will set up a virtual environment using Python 3.10 and install all the dep
     HF_TOKEN=your_huggingface_token
     HF_HOME=/path/to/your/huggingface/cache
     ```
+
+## Data
+
+### Inspection
+
+To visibly check whether the RAG questions of a dataset can be answered by the corresponding context, run the following command:
+
+    python3 -m src.inspect.inspect_spans -d <dataset_name> -m <max_samples>
+
+The dataset names can be found in the file itself.  
+The file can be used for every dataset that outputs the common `EvalSample` format.
