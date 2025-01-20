@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 from src.config.config import EvaluatorConfig
-from src.dto.dto import RetrieverResult, RetrieverResults
+from src.dto.dto import RetrieverResult, RetrieverResults, Span
 from src.dto.dto import EvalSample, RetrievedParagraphs, Answer
 from src.metrics.retrieval_metrics import RetrieverMetrics
 
@@ -19,74 +19,54 @@ class Evaluator:
             RetrieverResult):
         """
         Evaluates retrieval metrics (MAP, MRR) for a single document by comparing predictions to ground truth.
-
-        @param eval_sample: The ground truth EvalSample containing questions, answers, and document ID.
-        @param predictions: List of lists of RetrievedParagraphs, each list corresponding to a question in the eval sample.
-
-        @return: RetrieverResult object containing the evaluation metrics (MAP, MRR) and a detailed summary.
         """
         relevances = []
         sample_results = []
 
-        for question, prediction in zip(eval_sample.questions, predictions):
-            predicted_document_ids = [item.document_id for item in prediction]
-            relevance = self.__get_doc_relevance(predicted_document_ids=predicted_document_ids,
-                                                 expected_document_ids=[
-                                                     eval_sample.document_id])  # currently one relevant doc per question
+        for question, answer, prediction in zip(eval_sample.questions, eval_sample.answers, predictions):
+            predicted_chunks = [prediction.paragraphs for prediction in prediction][0]
+            relevance = self.__get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
 
-            relevances.append(relevance)
+            relevances.append(relevance)  # Store relevance per question
 
             sample_results.append(
                 {
                     "question": question,
-                    "expected_document_id": eval_sample.document_id,
-                    "predicted_document_ids": predicted_document_ids,
+                    "expected_answer": answer,
+                    "predicted_chunks": predicted_chunks,
                 }
             )
 
-        # calculates map and mrr over all questions in the document
+        # calculate MAP and MRR over all questions in the document
         mean_reciprocal_rank = self.metrics.mean_reciprocal_rank(relevance_score=relevances)
-        mean_average_precision = self.metrics.mean_reciprocal_rank(relevance_score=relevances)
+        mean_average_precision = self.metrics.mean_average_precision(relevance_score=relevances)
 
         results = RetrieverResult(
             map=mean_average_precision,
             mrr=mean_reciprocal_rank,
             detailed_summary=sample_results,
-            relevance_indicators=relevances
+            relevance_indicators=relevances  # Save relevance indicators for each question
         )
         return results
 
-    @staticmethod
-    def __get_doc_relevance(predicted_document_ids: List[str], expected_document_ids: List[str]) -> List[bool]:
+    def __get_chunk_relevance(self, predicted_chunks: List[str], expected_answer: Answer) -> List[bool]:
         """
-        Compares the predicted document IDs against the expected document IDs.Compares the predicted document IDs against the expected document IDs.
-
-                @param predictions:['doc1', 'doc2', 'doc3']
-                @param expected_document_ids: ['doc1', 'doc2', 'doc5']
-                @return: [[True, False, False], [True, True, False], [False, False, False]]
-                """
-        document_relevance = []
-
-        # Iterate over predicted document IDs
-        for predicted_document_id in predicted_document_ids:
-            matches = []
-
-            # Compare each predicted document ID with the ground truth document IDs
-            for expected_document_id in expected_document_ids:
-                is_match = (predicted_document_id == expected_document_id)  # Check if doc IDs match
-                matches.append(is_match)
-
-            document_relevance.append(any(matches))
-
-        return document_relevance
-
-    def evaluate_multiple_documents(self, eval_samples: List[EvalSample],
-                                    predictions: List[List[List[RetrievedParagraphs]]]):
+        Given the predicted chunks (multiple paragraphs for each question) and expected answer,
+        this function calculates the relevance of each chunk.
         """
-         Evaluates retrieval metrics (MAP, MRR) over multiple documents in the evaluation set.
-        @param eval_samples:
-        @param predictions:
-        @return:
+        relevance_scores = []
+
+        # Loop through each chunk for the question
+        for chunk in predicted_chunks:
+            relevance = self.__calculate_relevance_string_match(chunk, expected_answer)  # TODO: different relevance
+            # scores can be explored
+            relevance_scores.append(relevance)
+
+        return relevance_scores
+
+    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]]):
+        """
+        Evaluates retrieval metrics (MAP, MRR) over multiple documents in the evaluation set.
         """
         mrr, map = list(), list()
         per_eval_sample_results = []
@@ -99,7 +79,7 @@ class Evaluator:
 
             per_eval_sample_results.append(result_single_doc)
 
-        # compute overall map and mrr for all documents
+        # compute overall MAP and MRR for all documents
         overall_results = RetrieverResults(
             map_documents=float(np.average(map)),
             mrr_documents=float(np.average(mrr)),
@@ -111,88 +91,65 @@ class Evaluator:
         return overall_results
 
     def save_results_to_json(self, results: RetrieverResults):
-        results_dict = results.dict()
+        results_dict = results.model_dump()
 
         os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
-        file_path = os.path.join(self.evaluator_config.output_dir,
-                                 self.evaluator_config.output_file_name)
+        file_path = os.path.join(self.evaluator_config.output_dir, self.evaluator_config.output_file_name)
 
         with open(file_path, 'w') as f:
             json.dump(results_dict, f, indent=2)
 
         print(f"Results saved to {file_path}")
 
+    @staticmethod
+    def __calculate_relevance_string_match(chunk: str, expected_answer: Answer) -> bool:
+        """
+        Checks if the predicted chunk matches any part of the expected answer.
+        Performs exact string matching (case-insensitive).
+        """
+        if expected_answer.answer.strip().lower() in chunk.strip().lower():
+            return True
+        else:
+            return False
+
 
 if __name__ == "__main__":
     # Example retrieved data
-    eval_sample = [
+    eval_samples = [
         EvalSample(
             document_id="doc1",
-            document="This is a sample document. It contains important information about AI.",
-            questions=["What is the first document about?", "What does first document contain?"],
-            answers=[Answer(answer="AI"), Answer(answer="information")]
-        ),
-        EvalSample(document_id="doc2",
-                   document="This is a sample document. It contains important information about AI.",
-                   questions=["What is the second document about?", "What does second document contain?"],
-                   answers=[Answer(answer="AI"), Answer(answer="information")])
+            document="This document discusses the fundamentals of AI and its applications. The document highlights various AI technologies, including machine learning and deep learning.",
+            questions=["What is this document about?", "What technologies are discussed in this document?"],
+            answers=[Answer(answer="AI", start=0, end=2, spans=[Span(start=0, end=2)]),
+                     Answer(answer="machine learning", start=0, end=2)]
+        )
     ]
 
-    retrieved_paragraphs = [[[
-        RetrievedParagraphs(
-            document_id="doc1",
-            question="What is the first document about?",
-            paragraphs=["This is a sample document.", "It contains important information about AI."]
-        ),
-        RetrievedParagraphs(
-            document_id="doc2",
-            question="What is the first document about?",
-            paragraphs=["This is a sample document.", "It contains important information about AI."]
-        )
-    ],
+    retrieved_paragraphs = [[
         [
-            RetrievedParagraphs(
-                document_id="doc2",
-                question="What does first document contain?",
-                paragraphs=["This is a sample document.", "It contains important information about AI."]
-            ),
             RetrievedParagraphs(
                 document_id="doc1",
-                question="What does first document contain??",
-                paragraphs=["This is a sample document.", "It contains important information about AI."]
+                question="What is this document about?",
+                paragraphs=["This document discusses the fundamentals of AI.",
+                            "This document talks about AI in general.",
+                            "AI and machine learning are discussed."],
+                scores=[1, 1, 1]
+            )
+        ],
+        [
+            RetrievedParagraphs(
+                document_id="doc1",
+                question="What technologies are discussed in this document?",
+                paragraphs=["This document talks about machine learning technologies.",
+                            "AI technologies are discussed here.",
+                            "Deep learning and neural networks are also mentioned."],
+                scores=[1, 1, 1]
             )
         ]
-    ],
-        [
-            [
-                RetrievedParagraphs(
-                    document_id="doc2",
-                    question="What is the second document about?",
-                    paragraphs=["This is a sample document.", "It contains important information about AI."]
-                ),
-                RetrievedParagraphs(
-                    document_id="doc1",
-                    question="What is the second document about?",
-                    paragraphs=["This is a sample document.", "It contains important information about AI."]
-                )
-            ],
-            [
-                RetrievedParagraphs(
-                    document_id="doc2",
-                    question="What does second document contain?",
-                    paragraphs=["This is a sample document.", "It contains important information about AI."]
-                ),
-                RetrievedParagraphs(
-                    document_id="doc1",
-                    question="What does second document contain??",
-                    paragraphs=["This is a sample document.", "It contains important information about AI."]
-                )
-            ]
-        ]
-    ]
+    ]]
 
-    call_eval = Evaluator(evaluator_config=EvaluatorConfig())
-    #evaluation_results = call_eval.evaluate_single_document(eval_sample, retrieved_paragraphs)
-    evaluation_results = call_eval.evaluate_multiple_documents(eval_sample, retrieved_paragraphs)
+    evaluator = Evaluator(evaluator_config=EvaluatorConfig())
+    evaluation_results = evaluator.evaluate_multiple_documents(eval_samples, retrieved_paragraphs)
 
+    print("Evaluation Results:", evaluation_results)
 
