@@ -9,7 +9,7 @@ from src.data_handler.narrative_qa_data_handler import NarrativeQADataHandler
 
 class ServiceConfig(BaseModel):
     embed_model_name: str = STELLA_EN_1_5B_V5
-    embed_model_device: str = "cuda"
+    embed_model_device: str = "cpu"
     similarity_top_k: int = 5  # how many chunks should we retrieve?
     data_dir: str = "data/document"  # Directory of the documents
 
@@ -38,6 +38,9 @@ class SentenceSplitterConfig(BaseModel):
 class EvaluatorConfig(BaseModel):
     eval_limit: int = 1
     data_handler: Type[DataHandler] = NarrativeQADataHandler()
+    k: int = 5
+    output_dir: str = "output"
+    output_file_name: str = "evaluator_test.json"
 
 
 class LoggingConfig(BaseModel):  # LoggingConfig

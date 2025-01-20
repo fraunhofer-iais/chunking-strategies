@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Dict
 
 from pydantic import BaseModel
 
@@ -12,12 +12,25 @@ class Answer(BaseModel):
 class EvalSample(BaseModel):
     document_id: str
     document: str
-    questions: Optional[list[str]] = None
-    answers: Optional[list[Answer]] = None
+    questions: Optional[List[str]] = None
+    answers: Optional[List[Answer]] = None
 
 
 class RetrievedParagraphs(BaseModel):
     document_id: str
     question: str
-    paragraphs: list[str]
-    scores: list[float]
+    paragraphs: List[str]
+    scores: List[float]
+
+
+class RetrieverResult(BaseModel):
+    map: float
+    mrr: float
+    detailed_summary: List[Dict]
+    relevance_indicators: List
+
+
+class RetrieverResults(BaseModel):
+    map_documents: float
+    mrr_documents: float
+    per_eval_sample_results: List[RetrieverResult]
