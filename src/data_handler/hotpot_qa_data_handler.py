@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Iterator, Literal
 from urllib.request import DataHandler
 from datasets import load_dataset, Dataset
 from tqdm import tqdm
@@ -13,12 +13,11 @@ class HotpotQADataHandler(DataHandler):
 
         About 2000 out of 8000 samples are removed when setting remove_incomplete_samples to True.
         """
-        super().__init__()
         self.remove_incomplete_samples = remove_incomplete_samples
 
     dataset_name : str = "TIGER-Lab/LongRAG"
     subset: str = "hotpot_qa"
-    split: str = "full"  # "full" | "subset_1000"
+    split: Literal["full", "subset_1000"] = "full"  # "full" | "subset_1000"
 
     def load_data(self) -> list[EvalSample]:
         dataset = load_dataset(self.dataset_name, name=self.subset, split=self.split, streaming=True)
