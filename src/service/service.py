@@ -49,7 +49,6 @@ class Service:
         self.splitter_factory = splitter_factory
 
         self.text_splitter = self._initialize_text_splitter()
-        self.llm = self._initialize_llm()
         self.embed_model = self._initialize_embed_model()
 
     def _setup_logging(self):
@@ -58,9 +57,6 @@ class Service:
             format=self.config.format,
         )
         return logging.getLogger(__name__)
-
-    def _initialize_llm(self):
-        return OpenAI(model=self.config.llm_name, temperature=self.config.temperature)
 
     def _initialize_embed_model(self):
         return HuggingFaceEmbedding(

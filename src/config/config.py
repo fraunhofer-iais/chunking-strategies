@@ -8,8 +8,6 @@ from src.data_handler.narrative_qa_data_handler import NarrativeQADataHandler
 
 
 class ServiceConfig(BaseModel):
-    llm_name: str = GPT4O
-    temperature: float = .0
     embed_model_name: str = STELLA_EN_1_5B_V5
     embed_model_device: str = "cuda"
     similarity_top_k: int = 5  # how many chunks should we retrieve?
