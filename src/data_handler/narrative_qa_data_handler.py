@@ -8,8 +8,7 @@ from src.dto.dto import EvalSample, Answer
 
 
 class NarrativeQADataHandler(DataHandler):
-
-    dataset_name : str = "deepmind/narrativeqa"
+    dataset_name: str = "deepmind/narrativeqa"
 
     def load_data(self) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name)
@@ -37,7 +36,6 @@ class NarrativeQADataHandler(DataHandler):
                 sample.questions.append(dataset_dict["question"][idx]["text"])
                 sample.answers.append(Answer(answer=dataset_dict["answers"][idx][0]["text"]))
         return samples
-
 
 
 if __name__ == "__main__":
