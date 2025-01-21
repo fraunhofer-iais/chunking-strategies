@@ -7,7 +7,6 @@ from typing import List, Dict, Any
 import pandas as pd
 from llama_index.core import SimpleDirectoryReader, Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.openai import OpenAI
 from tqdm import tqdm
 
 from src.config.config import ServiceConfig, TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
@@ -70,7 +69,7 @@ class Service:
 
     def run(self) -> List[List[RetrievedParagraphs]]:
         data = evaluator_config.data_handler.load_data()
-        results= []
+        results = []
         for sample in tqdm(data[:evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.config.similarity_top_k,
