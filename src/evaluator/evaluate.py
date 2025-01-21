@@ -1,9 +1,7 @@
-import json
-import os
 from typing import List
 
 import numpy as np
-
+from fuzzywuzzy import fuzz
 from src.config.config import EvaluatorConfig
 from src.dto.dto import RetrieverResult, RetrieverResults, Span
 from src.dto.dto import EvalSample, RetrievedParagraphs, Answer
@@ -24,7 +22,7 @@ class Evaluator:
         sample_results = []
 
         for question, answer, prediction in zip(eval_sample.questions, eval_sample.answers, predictions):
-            predicted_chunks = [prediction.paragraphs for prediction in prediction][0]
+            predicted_chunks = prediction.paragraphs
             relevance = self.__get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
 
             relevances.append(relevance)  # Store relevance per question
@@ -55,16 +53,24 @@ class Evaluator:
         this function calculates the relevance of each chunk.
         """
         relevance_scores = []
+        start_idx = expected_answer.start
+        end_idx = expected_answer.end
 
-        # Loop through each chunk for the question
         for chunk in predicted_chunks:
-            relevance = self.__calculate_relevance_string_match(chunk, expected_answer)  # TODO: different relevance
-            # scores can be explored
-            relevance_scores.append(relevance)
+            if expected_answer.answer in chunk: # TODO: maybe remove this exact (?)
+                answer_in_chunk = chunk[start_idx:end_idx]
+                fuzzy_score = fuzz.partial_ratio(answer_in_chunk, chunk)
+                if fuzzy_score >= 90:
+                    relevance_scores.append(True)
+                else:
+                    relevance_scores.append(False)
+            else:
+                relevance_scores.append(False)
 
         return relevance_scores
 
-    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]]):
+    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]])\
+            -> RetrieverResults:
         """
         Evaluates retrieval metrics (MAP, MRR) over multiple documents in the evaluation set.
         """
@@ -85,68 +91,75 @@ class Evaluator:
             mrr_documents=float(np.average(mrr)),
             per_eval_sample_results=per_eval_sample_results
         )
-
-        self.save_results_to_json(results=overall_results)
-
         return overall_results
-
-    def save_results_to_json(self, results: RetrieverResults):
-        results_dict = results.model_dump()
-
-        os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
-        file_path = os.path.join(self.evaluator_config.output_dir, self.evaluator_config.output_file_name)
-
-        with open(file_path, 'w') as f:
-            json.dump(results_dict, f, indent=2)
-
-        print(f"Results saved to {file_path}")
-
-    @staticmethod
-    def __calculate_relevance_string_match(chunk: str, expected_answer: Answer) -> bool:
-        """
-        Checks if the predicted chunk matches any part of the expected answer.
-        Performs exact string matching (case-insensitive).
-        """
-        if expected_answer.answer.strip().lower() in chunk.strip().lower():
-            return True
-        else:
-            return False
 
 
 if __name__ == "__main__":
-    # Example retrieved data
     eval_samples = [
         EvalSample(
-            document_id="doc1",
-            document="This document discusses the fundamentals of AI and its applications. The document highlights various AI technologies, including machine learning and deep learning.",
-            questions=["What is this document about?", "What technologies are discussed in this document?"],
-            answers=[Answer(answer="AI", start=0, end=2, spans=[Span(start=0, end=2)]),
-                     Answer(answer="machine learning", start=0, end=2)]
+            document_id="doc_001",
+            document="In 2025, AI is transforming the way people interact with technology. AI applications are becoming more pervasive in industries such as healthcare, finance, and education. Many experts believe that the rapid development of AI will revolutionize jobs and productivity in the next decade.",
+            questions=["What are some industries affected by AI?", "What year is AI predicted to revolutionize jobs?"],
+            answers=[
+                Answer(answer="healthcare, finance, and education", start=133, end=182),
+                Answer(answer="2025", start=0, end=4)
+            ]
+        ),
+        EvalSample(
+            document_id="doc_002",
+            document="Climate change is a significant challenge facing the world today. It is caused by human activities, such as burning fossil fuels, deforestation, and industrial processes. Governments and organizations worldwide are working to mitigate its effects through policies and sustainable practices.",
+            questions=["What causes climate change?", "What is being done to combat climate change?"],
+            answers=[
+                Answer(answer="burning fossil fuels, deforestation, and industrial processes", start=62, end=118),
+                Answer(answer="Governments and organizations are working to mitigate its effects", start=182, end=234)
+            ]
         )
     ]
 
-    retrieved_paragraphs = [[
+    retrieved_paragraphs = [
         [
             RetrievedParagraphs(
-                document_id="doc1",
-                question="What is this document about?",
-                paragraphs=["This document discusses the fundamentals of AI.",
-                            "This document talks about AI in general.",
-                            "AI and machine learning are discussed."],
-                scores=[1, 1, 1]
+                document_id = "doc_001",
+                question="What are some industries affected by AI?",
+                paragraphs=[
+                    "In 2025, AI is transforming the way people interact with technology. AI applications are becoming more pervasive in industries such as healthcare, finance, and education.",
+                    "TMany experts believe that the rapid development of AI will revolutionize jobs and productivity in the next decade."
+                ],
+                scores=[0.95, 0.87]
+            ),
+            RetrievedParagraphs(
+                document_id="doc_001",
+                question="What year is AI predicted to revolutionize jobs?",
+                paragraphs=[
+                    "In 2025, AI is transforming the way people interact with technology. AI applications are becoming more pervasive in industries such as healthcare, finance, and education.",
+                    "TMany experts believe that the rapid development of AI will revolutionize jobs and productivity in the next decade."
+                ],
+                scores=[0.92, 0.85]
             )
         ],
+
         [
             RetrievedParagraphs(
-                document_id="doc1",
-                question="What technologies are discussed in this document?",
-                paragraphs=["This document talks about machine learning technologies.",
-                            "AI technologies are discussed here.",
-                            "Deep learning and neural networks are also mentioned."],
-                scores=[1, 1, 1]
+                document_id="doc_002",
+                question="What causes climate change?",
+                paragraphs=[
+                    "Climate change is a significant challenge facing the world today.",
+                    "It is caused by human activities, such as burning fossil fuels, deforestation, and industrial processes. Governments and organizations worldwide are working to mitigate its effects through policies and sustainable practices."
+                ],
+                scores=[0.92, 0.88]
+            ),
+            RetrievedParagraphs(
+                document_id="doc_002",
+                question="What is being done to combat climate change?",
+                paragraphs=[
+                    "Climate change is a significant challenge facing the world today.",
+                    "It is caused by human activities, such as burning fossil fuels, deforestation, and industrial processes. Governments and organizations worldwide are working to mitigate its effects through policies and sustainable practices."
+
+                ],
+                scores=[0.89, 0.83]
             )
         ]
-    ]]
+    ]
 
     evaluator = Evaluator(evaluator_config=EvaluatorConfig())
     evaluation_results = evaluator.evaluate_multiple_documents(eval_samples, retrieved_paragraphs)
