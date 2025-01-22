@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from fuzzywuzzy import fuzz
 from src.config.config import EvaluatorConfig
 from src.dto.dto import RetrieverResult, RetrieverResults, Span
 from src.dto.dto import EvalSample, RetrievedParagraphs, Answer
@@ -13,7 +12,7 @@ class Evaluator:
         self.evaluator_config = evaluator_config
         self.metrics = RetrieverMetrics()
 
-    def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[List[RetrievedParagraphs]]) -> (
+    def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[RetrievedParagraphs]) -> (
             RetrieverResult):
         """
         Evaluates retrieval metrics (MAP, MRR) for a single document by comparing predictions to ground truth.
@@ -23,7 +22,7 @@ class Evaluator:
 
         for question, answer, prediction in zip(eval_sample.questions, eval_sample.answers, predictions):
             predicted_chunks = prediction.paragraphs
-            relevance = self.__get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
+            relevance = self.get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
 
             relevances.append(relevance)  # Store relevance per question
 
@@ -47,29 +46,37 @@ class Evaluator:
         )
         return results
 
-    def __get_chunk_relevance(self, predicted_chunks: List[str], expected_answer: Answer) -> List[bool]:
+    def get_chunk_relevance(self, predicted_chunks: List[str], expected_answer: Answer) -> List[
+        bool]:
         """
         Given the predicted chunks (multiple paragraphs for each question) and expected answer,
-        this function calculates the relevance of each chunk.
+        this function calculates the relevance of each chunk based on relative character indices.
         """
         relevance_scores = []
-        start_idx = expected_answer.start
-        end_idx = expected_answer.end
+        start_idx = expected_answer.start  # Character-based start index of the expected answer
+        answer_text = expected_answer.answer
+
+        cumulative_offset = 0  # Track cumulative character offset across all chunks
 
         for chunk in predicted_chunks:
-            if expected_answer.answer in chunk: # TODO: maybe remove this exact (?)
-                answer_in_chunk = chunk[start_idx:end_idx]
-                fuzzy_score = fuzz.partial_ratio(answer_in_chunk, chunk)
-                if fuzzy_score >= 90:
+            chunk_start_idx = cumulative_offset  # This chunk starts at the cumulative offset
+            chunk_end_idx = cumulative_offset + len(chunk)  # This chunk ends at cumulative offset + chunk length
+
+            # Check if the expected answer's start index lies within the current chunk's range
+            if chunk_start_idx <= start_idx < chunk_end_idx:
+                # Answer is within this chunk, check if the chunk contains the answer text
+                if answer_text in chunk:
                     relevance_scores.append(True)
                 else:
                     relevance_scores.append(False)
             else:
                 relevance_scores.append(False)
 
+            cumulative_offset += len(chunk) + 1  # +1 to account for the space after each chunk
+
         return relevance_scores
 
-    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]])\
+    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]]) \
             -> RetrieverResults:
         """
         Evaluates retrieval metrics (MAP, MRR) over multiple documents in the evaluation set.
@@ -119,7 +126,7 @@ if __name__ == "__main__":
     retrieved_paragraphs = [
         [
             RetrievedParagraphs(
-                document_id = "doc_001",
+                document_id="doc_001",
                 question="What are some industries affected by AI?",
                 paragraphs=[
                     "In 2025, AI is transforming the way people interact with technology. AI applications are becoming more pervasive in industries such as healthcare, finance, and education.",
@@ -165,4 +172,3 @@ if __name__ == "__main__":
     evaluation_results = evaluator.evaluate_multiple_documents(eval_samples, retrieved_paragraphs)
 
     print("Evaluation Results:", evaluation_results)
-

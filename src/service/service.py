@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Any
 
 from llama_index.core import Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -89,10 +89,10 @@ class Service:
         retrieved_paragraphs = evaluation_data["retrieved_paragraphs"]
         evaluator = Evaluator(self.evaluator_config)
 
-        results = evaluator.evaluate_multiple_documents(eval_samples=samples,predictions= retrieved_paragraphs)
+        results = evaluator.evaluate_multiple_documents(eval_samples=samples, predictions=retrieved_paragraphs)
         return results
 
-    def save(self, results: RetrieverResults, chunk_size: int):
+    def save(self, results: RetrieverResults):
         results_dict = results.model_dump()
 
         directory = self.evaluator_config.output_dir + f'{current_datetime("%m%d%Y")}/'
@@ -100,7 +100,8 @@ class Service:
             os.makedirs(directory)
 
         os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
-        file_path = os.path.join(directory, f'{chunk_size}_{current_datetime("%H%M%S")}.json')
+        file_path = os.path.join(directory,
+                                 f'{self.evaluator_config.experiment_tag}_{current_datetime("%H%M%S")}.json')
 
         with open(file_path, 'w') as f:
             json.dump(results_dict, f, indent=2)
@@ -118,4 +119,4 @@ if __name__ == '__main__':
                       logging_config=logging_config, evaluator_config=evaluator_config)
     responses = chunker.run()
     evaluation_responses = chunker.evaluate(responses)
-    chunker.save(evaluation_responses, config.chunk_size)
+    chunker.save(evaluation_responses)
