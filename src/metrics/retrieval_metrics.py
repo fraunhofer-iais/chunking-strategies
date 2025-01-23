@@ -109,14 +109,3 @@ class RetrieverMetrics:
             precision_k = self.precision_at_k(relevance_score=relevance_score, k=k)
             precision_scores.append({'k': k, 'precision_k': precision_k})
         return precision_scores
-
-
-if __name__ == '__main__':
-    test_caller = RetrieverMetrics()
-
-    # Example of relevance scores for two queries
-    relevance_scores = [[1, 0, 0], [0, 0, 1]]
-
-    print("MAP:   ", test_caller.mean_average_precision(relevance_scores))
-    print("MRR:   ", test_caller.mean_reciprocal_rank(relevance_scores))
-
