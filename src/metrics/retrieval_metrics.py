@@ -96,6 +96,20 @@ class RetrieverMetrics:
         """
         return np.mean([self.average_precision(r) for r in relevance_score])
 
+    def precision_at_all_k(self, relevance_score: List[int], max_k: int) -> List[dict]:
+        """
+        :param relevance_score: Relevance scores (list or numpy) in rank order
+                (first element is the first item)
+        :type relevance_score: List[bool]
+        :param max_k: Maximum value of k (to calculate precision for k = 1, 2, ..., max_k)
+        :return: List of Precision @ k for all k = 1, 2, ..., max_k
+        """
+        precision_scores = []
+        for k in range(1, max_k + 1):
+            precision_k = self.precision_at_k(relevance_score=relevance_score, k=k)
+            precision_scores.append({'k': k, 'precision_k': precision_k})
+        return precision_scores
+
 
 if __name__ == '__main__':
     test_caller = RetrieverMetrics()

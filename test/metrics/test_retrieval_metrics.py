@@ -1,3 +1,5 @@
+import numpy as np
+
 from src.metrics.retrieval_metrics import RetrieverMetrics
 
 
@@ -21,6 +23,17 @@ def test_precision_at_k():
     assert predicted_score_at_1 == expected_score_at_1, 'Scores are same'
     assert predicted_score_at_2 == expected_score_at_2, 'Scores are same'
     assert predicted_score_at_3 == expected_score_at_3, 'Scores are same'
+
+
+def test_precision_at_all_k():
+    evaluate = RetrieverMetrics()
+    relevance_score = [1, 0, 1]  # Example query relevance scores
+    max_k = 3
+    expected_scores = [1.0, 0.5, 0.6666666666666666]  # Precision at k = 1, 2, 3
+    predicted_scores = evaluate.precision_at_all_k(relevance_score, max_k)
+
+    for k, (expected, predicted) in enumerate(zip(expected_scores, predicted_scores), start=1):
+        assert np.isclose(predicted, expected), f'Expected Precision@{k}: {expected}, Got: {predicted}'
 
 
 def test_average_precision():

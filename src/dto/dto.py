@@ -12,7 +12,6 @@ class Answer(BaseModel):
     answer: str
     start: Optional[int] = None
     end: Optional[int] = None
-    spans: Optional[list[Span]] = None
 
 
 class EvalSample(BaseModel):
@@ -30,13 +29,20 @@ class RetrievedParagraphs(BaseModel):
 
 
 class RetrieverResult(BaseModel):
-    map: float
-    mrr: float
     detailed_summary: List[Dict]
+    map: float  # mean_average_precision
+    mrr: float  # mrr over all questions in a document
     relevance_indicators: List
 
 
 class RetrieverResults(BaseModel):
-    map_documents: float
-    mrr_documents: float
+    map_documents: float  # average of map over documents
+    mrr_documents: float  # average of mrr over documents
+    total_document_time: float
+    total_query_time: float
+    average_document_time: float
+    average_query_time_per_document: float
+    total_documents: int
+    total_questions: int
+    average_questions_per_document: float
     per_eval_sample_results: List[RetrieverResult]
