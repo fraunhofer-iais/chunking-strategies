@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -100,8 +102,12 @@ class Service:
             os.makedirs(directory)
 
         os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
+        data_handler_name = self.evaluator_config.data_handler.__class__.dataset_name
+        dataset_name = data_handler_name.split('/')[-1]
+
         file_path = os.path.join(directory,
-                                 f'{self.evaluator_config.experiment_tag}_{current_datetime("%H%M%S")}.json')
+                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.name}'
+                                 f'_data_{dataset_name}_{current_datetime("%H%M%S")}.json')
 
         with open(file_path, 'w') as f:
             json.dump(results_dict, f, indent=2)
