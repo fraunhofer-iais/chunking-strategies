@@ -104,7 +104,7 @@ class Service:
         dataset_name = data_handler_name.split('/')[-1]
 
         file_path = os.path.join(directory,
-                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.name}'
+                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.__class__.__name__}'
                                  f'_data_{dataset_name}_{current_datetime("%H%M%S")}.json')
 
         with open(file_path, 'w') as f:
