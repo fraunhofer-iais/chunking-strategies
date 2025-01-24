@@ -100,7 +100,7 @@ class Service:
             os.makedirs(directory)
 
         os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
-        data_handler_name = self.evaluator_config.data_handler.__class__.dataset_name
+        data_handler_name = self.evaluator_config.data_handler.__class__.__name__
         dataset_name = data_handler_name.split('/')[-1]
 
         file_path = os.path.join(directory,
