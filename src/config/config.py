@@ -15,21 +15,18 @@ class ServiceConfig(BaseModel):
 
 
 class SemanticSplitterConfig(BaseModel):
-    name: Literal["SemanticSplitter"] = "semantic"
     buffer_size: int = 5  # number of sentences to group together when evaluating semantic similarity
     breakpoint_percentile_threshold: int = 95  # The percentile of cosine dissimilarity that must be exceeded between
     # a group of sentences and the next to form a node.  The smaller this number is, the more nodes will be generated.
 
 
 class TokenSplitterConfig(BaseModel):
-    name: Literal["TokenSplitter"] = "token"
     chunk_size: int = 100
     chunk_overlap: int = None
     separator: str = ' '
 
 
 class SentenceSplitterConfig(BaseModel):
-    name: Literal["SentenceSplitter"] = "sentence"
     chunk_size: int = 3
     chunk_overlap: int = None
     include_metadata: bool = True
