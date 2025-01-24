@@ -14,28 +14,20 @@ class Evaluator:
         self.metrics = RetrieverMetrics()
 
     def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[RetrievedParagraphs]) -> tuple[
-        RetrieverResult, int, int]:
+        RetrieverResult, int]:
         """
         Evaluates retrieval metrics (MAP, MRR) for a single document by comparing predictions to ground truth.
         """
         relevances = []
         sample_results = []
 
-        query_times_per_document = []
-
         for question, answer, prediction in zip(eval_sample.questions, eval_sample.answers, predictions):
-            query_start_time = time.time()
-
             predicted_chunks = prediction.paragraphs
             relevance = self.get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
             precision_all_k = self.metrics.precision_at_all_k(relevance_score=relevance, max_k=len(relevance))
             average_precision = self.metrics.average_precision(relevance_score=relevance)
 
             relevances.append(relevance)  # Store relevance per question
-
-            query_end_time = time.time()
-            query_time = query_end_time - query_start_time
-            query_times_per_document.append(query_time)
 
             sample_results.append(
                 {
@@ -51,7 +43,6 @@ class Evaluator:
         mean_reciprocal_rank = self.metrics.mean_reciprocal_rank(relevance_score=relevances)
         mean_average_precision = self.metrics.mean_average_precision(relevance_score=relevances)
 
-        total_query_time = sum(query_times_per_document)
         number_of_questions = len(eval_sample.questions)
 
         results = RetrieverResult(
@@ -61,7 +52,7 @@ class Evaluator:
             detailed_summary=sample_results,
             relevance_indicators=relevances  # Save relevance indicators for each question
         )
-        return results, total_query_time, number_of_questions
+        return results, number_of_questions
 
     def get_chunk_relevance(self, predicted_chunks: List[str], expected_answer: Answer) -> List[
         bool]:
@@ -101,26 +92,16 @@ class Evaluator:
         mrr, map = list(), list()
         per_eval_sample_results = []
 
-        total_document_time = 0
-        total_query_time = 0
         total_documents = len(eval_samples)
         total_questions = 0
 
         # evaluate each document
         for eval_sample, prediction in zip(eval_samples, predictions):
-            document_start_time = time.time()
-
-            result_single_doc, doc_query_time, num_questions = self.evaluate_single_document(eval_sample, prediction)
+            result_single_doc, num_questions = self.evaluate_single_document(eval_sample, prediction)
             mrr.append(result_single_doc.mrr)
             map.append(result_single_doc.map)
 
             per_eval_sample_results.append(result_single_doc)
-
-            total_query_time += doc_query_time
-            document_end_time = time.time()
-            document_time = document_end_time - document_start_time
-            total_document_time += document_time
-
             total_questions += num_questions
 
         average_questions_per_document = total_questions / total_documents
@@ -129,10 +110,6 @@ class Evaluator:
             map_documents=float(np.average(map)),
             mrr_documents=float(np.average(mrr)),
             per_eval_sample_results=per_eval_sample_results,
-            total_document_time=total_document_time,
-            total_query_time=total_query_time,
-            average_document_time=total_document_time / len(eval_samples),
-            average_query_time_per_document=total_query_time / len(eval_samples),
             total_documents=total_documents,
             total_questions=total_questions,
             average_questions_per_document=average_questions_per_document,

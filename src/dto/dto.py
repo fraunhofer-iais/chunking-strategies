@@ -38,10 +38,6 @@ class RetrieverResult(BaseModel):
 class RetrieverResults(BaseModel):
     map_documents: float  # average of map over documents
     mrr_documents: float  # average of mrr over documents
-    total_document_time: float
-    total_query_time: float
-    average_document_time: float
-    average_query_time_per_document: float
     total_documents: int
     total_questions: int
     average_questions_per_document: float
