@@ -100,11 +100,11 @@ class Service:
             os.makedirs(directory)
 
         os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
-        data_handler_name = self.evaluator_config.data_handler.__class__.dataset_name
+        data_handler_name = self.evaluator_config.data_handler.__class__.__name__
         dataset_name = data_handler_name.split('/')[-1]
 
         file_path = os.path.join(directory,
-                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.name}'
+                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.__class__.__name__}'
                                  f'_data_{dataset_name}_{current_datetime("%H%M%S")}.json')
 
         with open(file_path, 'w') as f:
