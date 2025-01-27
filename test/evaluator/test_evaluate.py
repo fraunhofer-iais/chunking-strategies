@@ -150,3 +150,14 @@ def test_chunk_relevance(evaluator):
     ]
     relevance = evaluator.get_chunk_relevance(predicted_chunks, expected_answer)
     assert relevance == [False, True]
+
+    # Test for case sensitivity
+    expected_answer = Answer(answer="Rapid development of AI", start=201, end=224)
+    predicted_chunks = [
+        "In 2025, AI is transforming the way people interact with technology. AI applications are "
+        "becoming more pervasive in industries such as healthcare, finance, and education.",
+        "Many experts believe that the rapid development of AI will revolutionize jobs "
+        "and productivity in the next decade."
+    ]
+    relevance = evaluator.get_chunk_relevance(predicted_chunks, expected_answer)
+    assert relevance == [False, True]

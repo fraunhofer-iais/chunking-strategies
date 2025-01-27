@@ -1,5 +1,4 @@
-import time
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 import numpy as np
 from src.config.config import EvaluatorConfig
@@ -13,7 +12,7 @@ class Evaluator:
         self.evaluator_config = evaluator_config
         self.metrics = RetrieverMetrics()
 
-    def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[RetrievedParagraphs]) -> tuple[
+    def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[RetrievedParagraphs]) -> Tuple[
         RetrieverResult, int]:
         """
         Evaluates retrieval metrics (MAP, MRR) for a single document by comparing predictions to ground truth.
@@ -58,30 +57,19 @@ class Evaluator:
         bool]:
         """
         Given the predicted chunks (multiple paragraphs for each question) and expected answer,
-        this function calculates the relevance of each chunk based on relative character indices.
+        this function calculates the relevance of each chunk based on string match.
+
+        **** Note ****
+        string match for relevance makes sense if the answer is present once in one of the chunks
         """
         relevance_scores = []
-        start_idx = expected_answer.start  # Character-based start index of the expected answer
         answer_text = expected_answer.answer
-
-        cumulative_offset = 0  # Track cumulative character offset across all chunks
-
         for chunk in predicted_chunks:
-            chunk_start_idx = cumulative_offset  # This chunk starts at the cumulative offset
-            chunk_end_idx = cumulative_offset + len(chunk)  # This chunk ends at cumulative offset + chunk length
-
-            # Check if the expected answer's start index lies within the current chunk's range
-            if chunk_start_idx <= start_idx < chunk_end_idx:
-                # Answer is within this chunk, check if the chunk contains the answer text
-                if answer_text in chunk:
-                    relevance_scores.append(True)
-                else:
-                    relevance_scores.append(False)
+            # Answer is within this chunk, check if the chunk contains the answer text
+            if answer_text.lower() in chunk.lower():
+                relevance_scores.append(True)
             else:
                 relevance_scores.append(False)
-
-            cumulative_offset += len(chunk) + 1  # +1 to account for the space after each chunk
-
         return relevance_scores
 
     def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]]) \
