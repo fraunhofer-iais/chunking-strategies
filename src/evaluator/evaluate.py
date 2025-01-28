@@ -23,9 +23,6 @@ class Evaluator:
         for question, answer, prediction in zip(eval_sample.questions, eval_sample.answers, predictions):
             predicted_chunks = prediction.paragraphs
             relevance = self.get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
-            precision_all_k = self.metrics.precision_at_all_k(relevance_score=relevance, max_k=len(relevance))
-            average_precision = self.metrics.average_precision(relevance_score=relevance)
-
             relevances.append(relevance)  # Store relevance per question
 
             sample_results.append(
@@ -33,8 +30,6 @@ class Evaluator:
                     "question": question,
                     "expected_answer": answer,
                     "predicted_chunks": predicted_chunks,
-                    "precision_at_all_k": precision_all_k,
-                    "average_precision": average_precision,
                 }
             )
 
@@ -42,11 +37,19 @@ class Evaluator:
         mean_reciprocal_rank = self.metrics.mean_reciprocal_rank(relevance_score=relevances)
         mean_average_precision = self.metrics.mean_average_precision(relevance_score=relevances)
 
+        # calculate precision at k and mean precision at k for all queries in the document
+        max_k = max(len(query) for query in relevances)
+        k_values = list(range(1, max_k + 1))
+        precision_results = self.metrics.precision_and_mean_precision_at_k(relevance_scores=relevances,
+                                                                           k_values=k_values)
+
         number_of_questions = len(eval_sample.questions)
 
         results = RetrieverResult(
             map=mean_average_precision,
             mrr=mean_reciprocal_rank,
+            precision_at_k=precision_results["precision_at_k"],
+            mean_precision_at_k=precision_results["mean_precision_at_k"],
             number_of_questions=number_of_questions,
             detailed_summary=sample_results,
             relevance_indicators=relevances  # Save relevance indicators for each question

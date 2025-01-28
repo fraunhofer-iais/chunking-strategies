@@ -32,6 +32,8 @@ class RetrieverResult(BaseModel):
     detailed_summary: List[Dict]
     map: float  # mean_average_precision
     mrr: float  # mrr over all questions in a document
+    precision_at_k: dict  # precision at k for all questions in a document
+    mean_precision_at_k: dict  # precision at k for all questions in a document
     relevance_indicators: List
 
 

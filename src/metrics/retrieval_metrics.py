@@ -96,16 +96,39 @@ class RetrieverMetrics:
         """
         return np.mean([self.average_precision(r) for r in relevance_score])
 
-    def precision_at_all_k(self, relevance_score: List[int], max_k: int) -> List[dict]:
+    @staticmethod
+    def precision_and_mean_precision_at_k(relevance_scores: List[List[bool]], k_values: List[int]) -> dict:
         """
-        :param relevance_score: Relevance scores (list or numpy) in rank order
-                (first element is the first item)
-        :type relevance_score: List[bool]
-        :param max_k: Maximum value of k (to calculate precision for k = 1, 2, ..., max_k)
-        :return: List of Precision @ k for all k = 1, 2, ..., max_k
+        Calculate both Precision at k and Mean Precision at k for a list of relevance scores across multiple queries.
+
+        :param relevance_scores: A list of relevance scores (List[bool]) for multiple queries
+        :param k_values: A list of k values to calculate Precision at k for each k.
+
+        :return: A dictionary containing both Precision at k and Mean Precision at k for each k value.
         """
-        precision_scores = []
-        for k in range(1, max_k + 1):
-            precision_k = self.precision_at_k(relevance_score=relevance_score, k=k)
-            precision_scores.append({'k': k, 'precision_k': precision_k})
-        return precision_scores
+        precision_at_k_values = {}
+        mean_precision_at_k_values = {}
+
+        for k in k_values:
+            precision_at_k_list = []
+
+            # Calculate Precision at k for each query/document
+            for relevance_score in relevance_scores:
+                if k > len(relevance_score):
+                    k = len(relevance_score)  # Adjust k to the length of the relevance list
+
+                relevant_docs_at_k = sum(relevance_score[:k])
+                precision_at_k = relevant_docs_at_k / k  # Precision at k for this query
+
+                precision_at_k_list.append(precision_at_k)
+
+            # Calculate Mean Precision at k
+            mean_precision_at_k = np.mean(precision_at_k_list)
+
+            precision_at_k_values[f"Precision at {k}"] = precision_at_k_list
+            mean_precision_at_k_values[f"Mean Precision at {k}"] = mean_precision_at_k
+
+        return {
+            "precision_at_k": precision_at_k_values,
+            "mean_precision_at_k": mean_precision_at_k_values
+        }
