@@ -67,7 +67,8 @@ class Service:
         for sample in tqdm(data[:evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.config.similarity_top_k,
-                                 embed_model=self.embed_model, splitter=self.text_splitter)
+                                 embed_model=self.embed_model, splitter=self.text_splitter,
+                                 verbose=self.config.vector_db_verbose)
             doc_results = []
             results["samples"].append(sample)
             for question, answer in zip(sample.questions, sample.answers):
@@ -95,7 +96,7 @@ class Service:
     def save(self, results: RetrieverResults):
         results_dict = results.model_dump()
 
-        directory = self.evaluator_config.output_dir + f'{current_datetime("%m%d%Y")}/'
+        directory = self.evaluator_config.output_dir + f'/{current_datetime("%m%d%Y")}/'
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -118,8 +119,8 @@ if __name__ == '__main__':
     splitter_factory = SplitterFactory()
     logging_config = LoggingConfig()
     evaluator_config = EvaluatorConfig()
-    chunker = Service(config=config, splitter_factory=splitter_factory, splitter_config=splitter_config,
+    service = Service(config=config, splitter_factory=splitter_factory, splitter_config=splitter_config,
                       logging_config=logging_config, evaluator_config=evaluator_config)
-    responses = chunker.run()
-    evaluation_responses = chunker.evaluate(responses)
-    chunker.save(evaluation_responses)
+    responses = service.run()
+    evaluation_responses = service.evaluate(responses)
+    service.save(evaluation_responses)

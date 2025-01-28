@@ -4,6 +4,7 @@ from pydantic import BaseModel, BaseConfig
 
 from src.constants.constants import GPT4O, STELLA_EN_1_5B_V5
 from src.data_handler.data_handler import DataHandler
+from src.data_handler.narrative_qa_data_handler import NarrativeQADataHandler
 from src.data_handler.sqad_data_handler import SquadDataHandler
 
 
@@ -11,7 +12,7 @@ class ServiceConfig(BaseModel):
     embed_model_name: str = STELLA_EN_1_5B_V5
     embed_model_device: str = "cuda"
     similarity_top_k: int = 5  # how many chunks should we retrieve?
-    data_dir: str = "data/document"  # Directory of the documents
+    vector_db_verbose: bool = False
 
 
 class SemanticSplitterConfig(BaseModel):
@@ -21,7 +22,7 @@ class SemanticSplitterConfig(BaseModel):
 
 
 class TokenSplitterConfig(BaseModel):
-    chunk_size: int = 100
+    chunk_size: int = 128
     chunk_overlap: int = None
     separator: str = ' '
 
@@ -37,8 +38,8 @@ class SentenceSplitterConfig(BaseModel):
 
 
 class EvaluatorConfig(BaseModel):
-    eval_limit: int = 1
-    data_handler: Type[DataHandler] = SquadDataHandler()
+    eval_limit: int = None
+    data_handler: Type[DataHandler] = NarrativeQADataHandler()
     k: int = 5
     output_dir: str = "output"
 
