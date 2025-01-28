@@ -10,10 +10,10 @@ from src.dto.dto import EvalSample, Answer
 class NarrativeQADataHandler(DataHandler):
     dataset_name: str = "deepmind/narrativeqa"
 
-    def load_data(self) -> List[EvalSample]:
-        ds = load_dataset(self.dataset_name)
+    def load_data(self, limit: int) -> List[EvalSample]:
+        ds = load_dataset(self.dataset_name)  # todo implement streaming depending on limit
         result = []
-        for dataset in ds.values():
+        for dataset in ds.values()[:limit]:
             current_dataset = dataset.to_dict()
             current_relevant_data = self._extract_relevant_data_from_dict(dataset_dict=current_dataset)
             result.extend(current_relevant_data)

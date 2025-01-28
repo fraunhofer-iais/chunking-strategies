@@ -9,10 +9,13 @@ from src.data_handler.sqad_data_handler import SquadDataHandler
 
 
 class ServiceConfig(BaseModel):
-    embed_model_name: str = STELLA_EN_1_5B_V5
-    embed_model_device: str = "cuda"
     similarity_top_k: int = 5  # how many chunks should we retrieve?
     vector_db_verbose: bool = False
+
+
+class EmbedModelConfig(BaseModel):
+    embed_model_name: str = STELLA_EN_1_5B_V5
+    embed_model_device: str = "cuda"
 
 
 class SemanticSplitterConfig(BaseModel):
@@ -22,7 +25,7 @@ class SemanticSplitterConfig(BaseModel):
 
 
 class TokenSplitterConfig(BaseModel):
-    chunk_size: int = 128
+    chunk_size: int = 64
     chunk_overlap: int = None
     separator: str = ' '
 
@@ -39,6 +42,7 @@ class SentenceSplitterConfig(BaseModel):
 
 class EvaluatorConfig(BaseModel):
     eval_limit: int = None
+    eval_start: int = None
     data_handler: Type[DataHandler] = NarrativeQADataHandler()
     k: int = 5
     output_dir: str = "output"

@@ -12,6 +12,24 @@ class Evaluator:
         self.evaluator_config = evaluator_config
         self.metrics = RetrieverMetrics()
 
+    def evaluate(self, eval_sample: EvalSample, retrieved_paragraphs: List[RetrievedParagraphs]):
+        """
+        Evaluates retrieval metrics (MAP, MRR) for a single document by comparing predictions to ground truth.
+        """
+        # todo find reasonable implementation and saving mechanisms
+        for question, answer in zip(eval_sample.questions, eval_sample.answers):
+            predicted_chunks = retrieved_paragraphs.paragraphs
+            relevance = self.get_chunk_relevance(predicted_chunks=predicted_chunks, expected_answer=answer)
+            precision_all_k = self.metrics.precision_at_all_k(relevance_score=relevance, max_k=len(relevance))
+            average_precision = self.metrics.average_precision(relevance_score=relevance)
+            mrr = self.metrics.mean_reciprocal_rank(relevance_score=relevance)
+        return RetrieverResult(
+            detailed_summary=None,
+            map=average_precision,
+            mrr=mrr,
+            relevance_indicators=None,
+        )
+
     def evaluate_single_document(self, eval_sample: EvalSample, predictions: List[RetrievedParagraphs]) -> Tuple[
         RetrieverResult, int]:
         """
@@ -72,7 +90,8 @@ class Evaluator:
                 relevance_scores.append(False)
         return relevance_scores
 
-    def evaluate_multiple_documents(self, eval_samples: List[EvalSample], predictions: List[List[RetrievedParagraphs]]) \
+    def evaluate_multiple_documents(self, eval_samples: List[EvalSample],
+                                    predictions: List[List[RetrievedParagraphs]]) \
             -> RetrieverResults:
         """
         Evaluates retrieval metrics (MAP, MRR) over multiple documents in the evaluation set.

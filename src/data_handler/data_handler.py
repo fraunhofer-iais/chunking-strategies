@@ -7,5 +7,4 @@ from src.dto.dto import EvalSample
 class DataHandler(ABC):
 
     @abstractmethod
-    def load_data(self) -> List[EvalSample]: ...
-
+    def load_data(self, limit: int) -> List[EvalSample]: ...
