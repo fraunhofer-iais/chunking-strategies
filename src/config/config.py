@@ -1,10 +1,10 @@
-from typing import Type
+from typing import Type, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, BaseConfig
 
 from src.constants.constants import GPT4O, STELLA_EN_1_5B_V5
 from src.data_handler.data_handler import DataHandler
-from src.data_handler.narrative_qa_data_handler import NarrativeQADataHandler
+from src.data_handler.sqad_data_handler import SquadDataHandler
 
 
 class ServiceConfig(BaseModel):
@@ -16,11 +16,12 @@ class ServiceConfig(BaseModel):
 
 class SemanticSplitterConfig(BaseModel):
     buffer_size: int = 5  # number of sentences to group together when evaluating semantic similarity
-    breakpoint_percentile_threshold: int = 95  # The percentile of cosine dissimilarity that must be exceeded between a group of sentences and the next to form a node.  The smaller this number is, the more nodes will be generated.
+    breakpoint_percentile_threshold: int = 95  # The percentile of cosine dissimilarity that must be exceeded between
+    # a group of sentences and the next to form a node.  The smaller this number is, the more nodes will be generated.
 
 
 class TokenSplitterConfig(BaseModel):
-    chunk_size: int = 512
+    chunk_size: int = 100
     chunk_overlap: int = None
     separator: str = ' '
 
@@ -37,7 +38,9 @@ class SentenceSplitterConfig(BaseModel):
 
 class EvaluatorConfig(BaseModel):
     eval_limit: int = 1
-    data_handler: Type[DataHandler] = NarrativeQADataHandler()
+    data_handler: Type[DataHandler] = SquadDataHandler()
+    k: int = 5
+    output_dir: str = "output"
 
 
 class LoggingConfig(BaseModel):  # LoggingConfig

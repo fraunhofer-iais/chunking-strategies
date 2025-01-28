@@ -2,28 +2,18 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Any
 
-import pandas as pd
-from llama_index.core import SimpleDirectoryReader, Document
+from llama_index.core import Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from tqdm import tqdm
 
 from src.config.config import ServiceConfig, TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
     LoggingConfig, EvaluatorConfig
-from src.dto.dto import RetrievedParagraphs
+from src.dto.dto import RetrievedParagraphs, EvalSample, RetrieverResults
+from src.evaluator.evaluate import Evaluator
 from src.factory.splitter_factory import SplitterFactory
 from src.vector_db.vector_db import VectorDB
-
-
-def read_from_pdf(data_dir: str) -> List[Document]:
-    documents = SimpleDirectoryReader(data_dir).load_data()
-    return documents
-
-
-def read_from_xlsx(data_dir: str) -> Dict[str, Any]:
-    result = pd.read_excel(data_dir)
-    return result.to_dict()
 
 
 def current_datetime(fmt: str = "%m%d%Y_%H%M%S") -> str:
@@ -67,14 +57,19 @@ class Service:
     def _initialize_text_splitter(self):
         return self.splitter_factory.create(splitter_config=self.splitter_config)
 
-    def run(self) -> List[List[RetrievedParagraphs]]:
-        data = evaluator_config.data_handler.load_data()
-        results = []
+    def run(self) -> dict[str, list[Any]]:
+
+        data: List[EvalSample] = evaluator_config.data_handler.load_data()
+        results = {
+            "samples": [],
+            "retrieved_paragraphs": []
+        }
         for sample in tqdm(data[:evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.config.similarity_top_k,
                                  embed_model=self.embed_model, splitter=self.text_splitter)
             doc_results = []
+            results["samples"].append(sample)
             for question, answer in zip(sample.questions, sample.answers):
                 result = vector_db.retrieve(query=question)
                 retrieved_documents = RetrievedParagraphs(
@@ -85,20 +80,36 @@ class Service:
                     scores=[result.score for result in result],
                 )
                 doc_results.append(retrieved_documents)
-            results.append(doc_results)
-        # todo save result
-        # result_dict = responses.model_dump()
-        # self._save_result(result_dict, chunk_size=self.config.chunk_size)
+            results["retrieved_paragraphs"].append(doc_results)
         return results
 
-    def _save_result(self, result_dict: dict, chunk_size: int):
-        directory = self.config.out_dir + f'{current_datetime("%m%d%Y")}/'
+    def evaluate(self, evaluation_data: dict[str, List[Any]]) -> RetrieverResults:
+        samples = evaluation_data["samples"]
+
+        retrieved_paragraphs = evaluation_data["retrieved_paragraphs"]
+        evaluator = Evaluator(self.evaluator_config)
+
+        results = evaluator.evaluate_multiple_documents(eval_samples=samples, predictions=retrieved_paragraphs)
+        return results
+
+    def save(self, results: RetrieverResults):
+        results_dict = results.model_dump()
+
+        directory = self.evaluator_config.output_dir + f'{current_datetime("%m%d%Y")}/'
         if not os.path.exists(directory):
             os.makedirs(directory)
-        # fixme
-        filename = f'{chunk_size}_{current_datetime("%H%M%S")}.json'
-        with open(directory + filename, 'w') as ff:
-            json.dump(result_dict, ff)
+
+        os.makedirs(self.evaluator_config.output_dir, exist_ok=True)
+        data_handler_name = self.evaluator_config.data_handler.__class__.__name__
+
+        file_path = os.path.join(directory,
+                                 f'chunk_size_{self.splitter_config.chunk_size}_splitter_{self.splitter_config.__class__.__name__}'
+                                 f'_data_{data_handler_name}_{current_datetime("%H%M%S")}.json')
+
+        with open(file_path, 'w') as f:
+            json.dump(results_dict, f, indent=2)
+
+        print(f"Results saved to {file_path}")
 
 
 if __name__ == '__main__':
@@ -110,4 +121,5 @@ if __name__ == '__main__':
     chunker = Service(config=config, splitter_factory=splitter_factory, splitter_config=splitter_config,
                       logging_config=logging_config, evaluator_config=evaluator_config)
     responses = chunker.run()
-    ...
+    evaluation_responses = chunker.evaluate(responses)
+    chunker.save(evaluation_responses)
