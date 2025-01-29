@@ -11,12 +11,11 @@ class NarrativeQADataHandler(DataHandler):
     dataset_name: str = "deepmind/narrativeqa"
 
     def load_data(self, limit: int) -> List[EvalSample]:
-        ds = load_dataset(self.dataset_name)  # todo implement streaming depending on limit
+        ds = load_dataset(self.dataset_name, streaming=True)  # todo implement streaming depending on limit
         result = []
         counter = 0
         for dataset in ds.values():
-            current_dataset = dataset.to_dict()
-            current_relevant_data = self._extract_relevant_data_from_dict(dataset_dict=current_dataset, counter=counter,
+            current_relevant_data = self._extract_relevant_data_from_dict(dataset=dataset, counter=counter,
                                                                           limit=limit)
             result.extend(current_relevant_data)
             counter += len(current_relevant_data)
@@ -24,19 +23,20 @@ class NarrativeQADataHandler(DataHandler):
                 break
         return result
 
-    def _extract_relevant_data_from_dict(self, dataset_dict: Dict, counter: int, limit: int) -> List[EvalSample]:
+    def _extract_relevant_data_from_dict(self, dataset: Dict, counter: int, limit: int) -> List[EvalSample]:
         unique_doc_ids = []
         samples = []
-        for idx, document in enumerate(tqdm(dataset_dict["document"])):
+        for dataset_sample in enumerate(tqdm(dataset)):
+            document =  dataset_sample["document"]
             doc_id = document["id"]
             doc = document["text"]
-            answer = dataset_dict["answers"][idx][0]["text"]
+            answer = dataset_sample["answers"][0]["text"]
             span = self.get_span(doc=doc, answer=answer)
             if not span:
                 continue
             if doc_id not in unique_doc_ids:
                 sample = EvalSample(document_id=doc_id, document=doc)
-                sample.questions = [dataset_dict["question"][idx]["text"]]
+                sample.questions = [dataset_sample["question"]["text"]]
                 sample.answers = [Answer(answer=answer, start=span[0], end=span[1])]
                 unique_doc_ids.append(doc_id)
                 samples.append(sample)
@@ -44,7 +44,7 @@ class NarrativeQADataHandler(DataHandler):
                 if limit and counter >= limit:
                     break
             else:
-                sample.questions.append(dataset_dict["question"][idx]["text"])
+                sample.questions.append(dataset_sample["question"]["text"])
                 sample.answers.append(Answer(answer=answer, start=span[0], end=span[1]))
         return samples
 
