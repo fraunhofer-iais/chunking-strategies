@@ -1,5 +1,5 @@
 from src.config.config import EvaluatorConfig
-from src.evaluator.evaluate import Evaluator
+from src.evaluator.evaluator import Evaluator
 
 
 class EvaluatorFactory:

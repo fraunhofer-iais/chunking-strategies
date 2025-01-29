@@ -13,13 +13,18 @@ class NarrativeQADataHandler(DataHandler):
     def load_data(self, limit: int) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name)  # todo implement streaming depending on limit
         result = []
-        for dataset in ds.values()[:limit]:
+        counter = 0
+        for dataset in ds.values():
             current_dataset = dataset.to_dict()
-            current_relevant_data = self._extract_relevant_data_from_dict(dataset_dict=current_dataset)
+            current_relevant_data = self._extract_relevant_data_from_dict(dataset_dict=current_dataset, counter=counter,
+                                                                          limit=limit)
             result.extend(current_relevant_data)
+            counter += len(current_relevant_data)
+            if limit and counter >= limit:
+                break
         return result
 
-    def _extract_relevant_data_from_dict(self, dataset_dict: Dict) -> List[EvalSample]:
+    def _extract_relevant_data_from_dict(self, dataset_dict: Dict, counter: int, limit: int) -> List[EvalSample]:
         unique_doc_ids = []
         samples = []
         for idx, document in enumerate(tqdm(dataset_dict["document"])):
@@ -35,6 +40,9 @@ class NarrativeQADataHandler(DataHandler):
                 sample.answers = [Answer(answer=answer, start=span[0], end=span[1])]
                 unique_doc_ids.append(doc_id)
                 samples.append(sample)
+                counter += 1
+                if limit and counter >= limit:
+                    break
             else:
                 sample.questions.append(dataset_dict["question"][idx]["text"])
                 sample.answers.append(Answer(answer=answer, start=span[0], end=span[1]))
@@ -71,5 +79,5 @@ class NarrativeQADataHandler(DataHandler):
 
 if __name__ == "__main__":
     data_handler = NarrativeQADataHandler()
-    data = data_handler.load_data()
+    data = data_handler.load_data(limit=None)
     ...

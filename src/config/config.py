@@ -1,16 +1,11 @@
-from typing import Type, Literal
+from pydantic import BaseModel
 
-from pydantic import BaseModel, BaseConfig
-
-from src.constants.constants import GPT4O, STELLA_EN_1_5B_V5
-from src.data_handler.data_handler import DataHandler
-from src.data_handler.narrative_qa_data_handler import NarrativeQADataHandler
-from src.data_handler.sqad_data_handler import SquadDataHandler
+from src.constants.constants import STELLA_EN_1_5B_V5
 
 
-class ServiceConfig(BaseModel):
+class VectorDBConfig(BaseModel):
     similarity_top_k: int = 5  # how many chunks should we retrieve?
-    vector_db_verbose: bool = False
+    verbose: bool = False
 
 
 class EmbedModelConfig(BaseModel):
@@ -25,7 +20,7 @@ class SemanticSplitterConfig(BaseModel):
 
 
 class TokenSplitterConfig(BaseModel):
-    chunk_size: int = 64
+    chunk_size: int = 256
     chunk_overlap: int = None
     separator: str = ' '
 
@@ -41,14 +36,14 @@ class SentenceSplitterConfig(BaseModel):
 
 
 class EvaluatorConfig(BaseModel):
-    eval_limit: int = None
     eval_start: int = None
-    data_handler: Type[DataHandler] = NarrativeQADataHandler()
-    k: int = 5
+    eval_limit: int = None
     output_dir: str = "output"
 
 
-class LoggingConfig(BaseModel):  # LoggingConfig
-    level: str = "INFO"  # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
-    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    filename: str = None  # If specified, logs will be written to a file
+class NarrativeQADataHandlerConfig(BaseModel):
+    ...
+
+
+class SquadDataHandlerConfig(BaseModel):
+    minimum_context_characters: int = 1250 # minimum number of characters in a context to be considered for evaluation

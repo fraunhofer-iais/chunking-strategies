@@ -21,24 +21,18 @@ class EvalSample(BaseModel):
     answers: Optional[List[Answer]] = None
 
 
-class RetrievedParagraphs(BaseModel):
+class RetrieverResult(BaseModel):
     document_id: str
     question: str
     paragraphs: List[str]
     scores: List[float]
 
 
-class RetrieverResult(BaseModel):
-    detailed_summary: List[Dict]
-    map: float  # mean_average_precision
-    mrr: float  # mrr over all questions in a document
-    relevance_indicators: List
+class EvalResult(BaseModel):
+    recall_at_k: List[float]
+    eval_sample: EvalSample
+    retriever_results: List[RetrieverResult]
 
 
-class RetrieverResults(BaseModel):
-    map_documents: float  # average of map over documents
-    mrr_documents: float  # average of mrr over documents
-    total_documents: int
-    total_questions: int
-    average_questions_per_document: float
-    per_eval_sample_results: List[RetrieverResult]
+class AverageDocResult(BaseModel):
+    average_recall_at_k: List[float]
