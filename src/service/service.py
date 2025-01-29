@@ -113,13 +113,16 @@ class Service:
         )
 
 
-        if __name__ == '__main__':
-            splitter_config = TokenSplitterConfig()
-        evaluator_config = EvaluatorConfig()
-        embed_model_config = EmbedModelConfig()
-        data_handler_config = NarrativeQADataHandlerConfig()
-        vector_db_config = VectorDBConfig()
-        service = Service(embed_model_config=embed_model_config, splitter_config=splitter_config,
-                          evaluator_config=evaluator_config, data_handler_config=data_handler_config,
-                          vector_db_config=vector_db_config, )
-        responses = service.run()
+if __name__ == '__main__':
+    splitter_config = TokenSplitterConfig()
+    evaluator_config = EvaluatorConfig()
+    embed_model_config = EmbedModelConfig()
+    data_handler_config = NarrativeQADataHandlerConfig()
+    vector_db_config = VectorDBConfig()
+    service = Service(embed_model_config=embed_model_config,
+                      splitter_config=splitter_config,
+                      evaluator_config=evaluator_config,
+                      data_handler_config=data_handler_config,
+                      vector_db_config=vector_db_config,
+                      )
+    responses = service.run()

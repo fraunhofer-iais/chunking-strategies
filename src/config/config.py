@@ -26,7 +26,7 @@ class TokenSplitterConfig(BaseModel):
 
 
 class SentenceSplitterConfig(BaseModel):
-    chunk_size: int = 3
+    chunk_size: int = 256
     chunk_overlap: int = None
     include_metadata: bool = True
     include_prev_next_rel: bool = True
@@ -37,7 +37,7 @@ class SentenceSplitterConfig(BaseModel):
 
 class EvaluatorConfig(BaseModel):
     eval_start: int = None
-    eval_limit: int = None
+    eval_limit: int = 2
     output_dir: str = "output"
 
 
