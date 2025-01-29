@@ -1,17 +1,16 @@
-from typing import Type, Literal
+from pydantic import BaseModel
 
-from pydantic import BaseModel, BaseConfig
-
-from src.constants.constants import GPT4O, STELLA_EN_1_5B_V5
-from src.data_handler.data_handler import DataHandler
-from src.data_handler.sqad_data_handler import SquadDataHandler
+from src.constants.constants import STELLA_EN_1_5B_V5
 
 
-class ServiceConfig(BaseModel):
+class VectorDBConfig(BaseModel):
+    similarity_top_k: int = 5  # how many chunks should we retrieve?
+    verbose: bool = False
+
+
+class EmbedModelConfig(BaseModel):
     embed_model_name: str = STELLA_EN_1_5B_V5
     embed_model_device: str = "cuda"
-    similarity_top_k: int = 5  # how many chunks should we retrieve?
-    data_dir: str = "data/document"  # Directory of the documents
 
 
 class SemanticSplitterConfig(BaseModel):
@@ -21,13 +20,13 @@ class SemanticSplitterConfig(BaseModel):
 
 
 class TokenSplitterConfig(BaseModel):
-    chunk_size: int = 100
+    chunk_size: int = 256
     chunk_overlap: int = None
     separator: str = ' '
 
 
 class SentenceSplitterConfig(BaseModel):
-    chunk_size: int = 3
+    chunk_size: int = 256
     chunk_overlap: int = None
     include_metadata: bool = True
     include_prev_next_rel: bool = True
@@ -37,13 +36,14 @@ class SentenceSplitterConfig(BaseModel):
 
 
 class EvaluatorConfig(BaseModel):
-    eval_limit: int = 1
-    data_handler: Type[DataHandler] = SquadDataHandler()
-    k: int = 5
+    eval_start: int = None
+    eval_limit: int = 2
     output_dir: str = "output"
 
 
-class LoggingConfig(BaseModel):  # LoggingConfig
-    level: str = "INFO"  # Can be DEBUG, INFO, WARNING, ERROR, CRITICAL
-    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    filename: str = None  # If specified, logs will be written to a file
+class NarrativeQADataHandlerConfig(BaseModel):
+    ...
+
+
+class SquadDataHandlerConfig(BaseModel):
+    minimum_context_characters: int = 1250 # minimum number of characters in a context to be considered for evaluation

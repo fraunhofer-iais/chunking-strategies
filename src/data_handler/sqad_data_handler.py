@@ -9,9 +9,11 @@ from src.dto.dto import EvalSample, Answer
 
 class SquadDataHandler(DataHandler):
     dataset_name: str = "lhoestq/squad"
-    minimum_context_characters: int = 1250
 
-    def load_data(self) -> List[EvalSample]:
+    def __init__(self, minimum_context_characters: int):
+        self.minimum_context_characters = minimum_context_characters
+
+    def load_data(self, limit: int) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name)
         result = []
         for dataset in ds.values():
@@ -50,5 +52,5 @@ class SquadDataHandler(DataHandler):
 
 
 if __name__ == '__main__':
-    data_handler = SquadDataHandler()
-    data = data_handler.load_data()
+    data_handler = SquadDataHandler(minimum_context_characters=1250)
+    data = data_handler.load_data(limit=1000)
