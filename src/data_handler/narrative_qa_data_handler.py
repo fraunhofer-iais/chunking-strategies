@@ -11,7 +11,7 @@ class NarrativeQADataHandler(DataHandler):
     dataset_name: str = "deepmind/narrativeqa"
 
     def load_data(self, limit: int) -> List[EvalSample]:
-        ds = load_dataset(self.dataset_name, streaming=True)  # todo implement streaming depending on limit
+        ds = load_dataset(self.dataset_name, streaming=True)
         result = []
         counter = 0
         for dataset in ds.values():
