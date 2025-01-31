@@ -33,6 +33,7 @@ class Evaluator:
             if answer.lower() in retrieved_paragraph.lower():
                 # found the answer in the retrieved paragraphs
                 recalls = create_list(k=k, idx=idx)
+                break
         if recalls:
             return recalls
         else:
