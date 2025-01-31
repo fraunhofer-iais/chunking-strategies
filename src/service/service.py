@@ -7,7 +7,8 @@ from llama_index.core import Document
 from tqdm import tqdm
 
 from src.config.config import TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
-    EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, SquadDataHandlerConfig, VectorDBConfig
+    EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, SquadDataHandlerConfig, VectorDBConfig, \
+    NQDataHandlerConfig
 from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
 from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     splitter_config = TokenSplitterConfig()
     evaluator_config = EvaluatorConfig()
     embed_model_config = EmbedModelConfig()
-    data_handler_config = NarrativeQADataHandlerConfig()
+    data_handler_config = NQDataHandlerConfig()
     vector_db_config = VectorDBConfig()
     service = Service(embed_model_config=embed_model_config,
                       splitter_config=splitter_config,
