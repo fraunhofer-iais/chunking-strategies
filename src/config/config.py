@@ -47,3 +47,7 @@ class NarrativeQADataHandlerConfig(BaseModel):
 
 class SquadDataHandlerConfig(BaseModel):
     minimum_context_characters: int = 1250 # minimum number of characters in a context to be considered for evaluation
+
+
+class JsonReaderConfig(BaseModel):
+    json_dir: str = "output"
