@@ -27,16 +27,16 @@ class NarrativeQADataHandler(DataHandler):
         unique_doc_ids = []
         samples = []
         for dataset_sample in enumerate(tqdm(dataset)):
-            document =  dataset_sample["document"]
+            document =  dataset_sample[1]["document"]
             doc_id = document["id"]
             doc = document["text"]
-            answer = dataset_sample["answers"][0]["text"]
+            answer = dataset_sample[1]["answers"][0]["text"]
             span = self.get_span(doc=doc, answer=answer)
             if not span:
                 continue
             if doc_id not in unique_doc_ids:
                 sample = EvalSample(document_id=doc_id, document=doc)
-                sample.questions = [dataset_sample["question"]["text"]]
+                sample.questions = [dataset_sample[1]["question"]["text"]]
                 sample.answers = [Answer(answer=answer, start=span[0], end=span[1])]
                 unique_doc_ids.append(doc_id)
                 samples.append(sample)
@@ -44,7 +44,7 @@ class NarrativeQADataHandler(DataHandler):
                 if limit and counter >= limit:
                     break
             else:
-                sample.questions.append(dataset_sample["question"]["text"])
+                sample.questions.append(dataset_sample[1]["question"]["text"])
                 sample.answers.append(Answer(answer=answer, start=span[0], end=span[1]))
         return samples
 
