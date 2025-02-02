@@ -1,7 +1,6 @@
+import argparse
 import json
-import os
-from datetime import datetime
-from typing import List, Any
+from typing import List
 
 from llama_index.core import Document
 from tqdm import tqdm
@@ -14,14 +13,8 @@ from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory
 from src.factory.evaluator_factory import EvaluatorFactory
 from src.factory.splitter_factory import SplitterFactory
-from src.utils import mean_of_lists
+from src.utils import mean_of_lists, create_dir_if_not_exists
 from src.vector_db.vector_db import VectorDB
-
-
-def current_datetime(fmt: str = "%m%d%Y_%H%M%S") -> str:
-    now = datetime.now()
-    date_time = now.strftime(fmt)
-    return date_time
 
 
 class Service:
@@ -49,6 +42,7 @@ class Service:
         data: List[EvalSample] = self.data_handler.load_data(limit=self.evaluator.evaluator_config.eval_limit)
         eval_results = []
         directory = self._construct_dir()
+        self._save_all_configs(filename=directory.replace(".json", "_configs.json"))
         for sample in tqdm(data[self.evaluator.evaluator_config.eval_start:self.evaluator.evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.vector_db_config.similarity_top_k,
@@ -62,7 +56,6 @@ class Service:
             result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results)
             eval_results.append(result)
             self.save(eval_result=result, file_path=directory)
-        self._save_all_configs(filename=directory.replace(".json", "_configs.json"))
         averages = self._compute_average_recall(eval_results)
         self._save_average_recall(filename=directory.replace(".json", "_average_scores.json"), doc_result=averages)
         return eval_results
@@ -79,12 +72,10 @@ class Service:
         return retrieved_paragraphs
 
     def _construct_dir(self):
-        return self.evaluator.evaluator_config.output_dir + f'/{current_datetime("%m%d%Y")}/chunk_size_{self.text_splitter.chunk_size}_splitter_{self.text_splitter.__class__.__name__}_data_{self.data_handler.__class__.__name__}.json'
+        return self.evaluator.evaluator_config.output_dir + f'/chunk_size_{self.text_splitter.chunk_size}_{self.text_splitter.__class__.__name__}_{self.data_handler.__class__.__name__}.json'
 
     def save(self, file_path: str, eval_result: EvalResult):
-        directory = os.path.dirname(file_path)
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)
+        create_dir_if_not_exists(file_path)
         # Read existing results
         try:
             with open(file_path, 'r') as f:
@@ -100,22 +91,29 @@ class Service:
 
     def _save_all_configs(self, filename: str):
         configs_as_dicts = [config.model_dump() for config in self.configs]
+        create_dir_if_not_exists(filename)
         with open(filename, 'w') as f:
             json.dump(configs_as_dicts, f, indent=4)
 
     def _save_average_recall(self, filename: str, doc_result: AverageDocResult):
+        create_dir_if_not_exists(filename)
         with open(filename, 'w') as f:
             json.dump(doc_result.model_dump(), f, indent=4)
 
     def _compute_average_recall(self, eval_results: List[EvalResult]) -> AverageDocResult:
         list_of_recalls = [eval_result.recall_at_k for eval_result in eval_results]
-        return AverageDocResult(
+        result = AverageDocResult(
             average_recall_at_k=mean_of_lists(list_of_recalls),
         )
+        return result
 
 
 if __name__ == '__main__':
-    splitter_config = TokenSplitterConfig()
+    parser = argparse.ArgumentParser(description='Run the service with configurable chunk size.')
+    parser.add_argument('--chunk_size', type=int, default=64, help='Chunk size for the splitter')
+    args = parser.parse_args()
+
+    splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
     evaluator_config = EvaluatorConfig()
     embed_model_config = EmbedModelConfig()
     data_handler_config = NQDataHandlerConfig()

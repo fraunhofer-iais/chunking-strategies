@@ -7,4 +7,9 @@ from src.dto.dto import EvalSample
 class DataHandler(ABC):
 
     @abstractmethod
-    def load_data(self, limit: int) -> List[EvalSample]: ...
+    def load_data(self, limit: int) -> List[EvalSample]:
+        """
+        Load dataset and return a list of EvalSample objects.
+        :param limit: If this is given, only the first `limit` samples are loaded.
+        """
+        ...
