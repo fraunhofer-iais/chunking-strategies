@@ -1,3 +1,5 @@
+from typing import List, Union, Optional
+
 from pydantic import BaseModel
 
 from src.constants.constants import STELLA_EN_1_5B_V5
@@ -59,4 +61,15 @@ class NQDataHandlerConfig(BaseModel):
 
 class StitchedNewsQADataHandlerConfig(BaseModel):
     minimum_context_characters: int = 50000
+
+
+class HybridDataHandlerConfig(BaseModel):
+    handler_configs: List[Union[
+    StitchedSquadDataHandlerConfig,
+    StitchedTechQADataHandlerConfig,
+    StitchedNewsQADataHandlerConfig,
+    NQDataHandlerConfig,
+    NarrativeQADataHandlerConfig]] = \
+        [StitchedSquadDataHandlerConfig, StitchedTechQADataHandlerConfig] # List of individual handler configurations
+    limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
 

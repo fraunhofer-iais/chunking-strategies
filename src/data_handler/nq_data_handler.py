@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from bs4 import BeautifulSoup
 from datasets import load_dataset
@@ -14,7 +14,7 @@ class NQDataHandler(DataHandler):
     def __init__(self, minimum_context_characters: int):
         self.minimum_context_characters = minimum_context_characters
 
-    def load_data(self, limit: int) -> List[EvalSample]:
+    def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name, streaming=True)
         result = []
         counter = 0
@@ -85,5 +85,5 @@ class NQDataHandler(DataHandler):
 
 if __name__ == "__main__":
     data_handler = NQDataHandler(minimum_context_characters=50000)
-    data = data_handler.load_data(limit=10)
+    data = data_handler.load_data()
     print(data)

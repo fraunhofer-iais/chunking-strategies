@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 
 from datasets import load_dataset
 from tqdm import tqdm
@@ -14,7 +14,7 @@ class StitchedSquadDataHandler(DataHandler):
     def __init__(self, minimum_context_characters: int):
         self.minimum_context_characters = minimum_context_characters
 
-    def load_data(self, limit: int) -> List[EvalSample]:
+    def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name, streaming=True)
         result = []
         document_id = 1  # Unique document ID counter
@@ -22,32 +22,32 @@ class StitchedSquadDataHandler(DataHandler):
         counter = 0
 
         for dataset in ds.values():
-            current_dataset = dataset.to_dict()
             stitched_samples = self._extract_and_stitch_documents(
-                dataset_dict=current_dataset,
+                dataset=dataset,
                 document_id=document_id,
                 seen_documents=seen_documents,
-                limit= limit - counter
+                limit= limit - counter if limit is not None else None
             )
             result.extend(stitched_samples)
             document_id += len(stitched_samples)
             counter += len(stitched_samples)
 
-            if limit and counter >= limit:
+            if limit is not None and counter >= limit:
                 break
 
         return result
 
-    def _extract_and_stitch_documents(self, dataset_dict: Dict, document_id: int, seen_documents: Set[str], limit: int) \
+    def _extract_and_stitch_documents(self, dataset, document_id: int, seen_documents: Set[str], limit: int) \
             -> List[EvalSample]:
         buffer = []  # Store short documents for stitching
         samples = []
 
-        for idx, document in enumerate(tqdm(dataset_dict["context"])):
+        for dataset_sample in enumerate(tqdm(dataset)):
             if limit and len(samples) >= limit:
                 break
-            question = dataset_dict["question"][idx]
-            answer_data = dataset_dict["answers"][idx]
+            document = dataset_sample[1]["context"]
+            question = dataset_sample[1]["question"]
+            answer_data = dataset_sample[1]["answers"]
             answer = self.get_answer(answer_data)
 
             # Skip duplicate documents
@@ -108,5 +108,5 @@ class StitchedSquadDataHandler(DataHandler):
 
 if __name__ == '__main__':
     data_handler = StitchedSquadDataHandler(minimum_context_characters=50000)
-    data = data_handler.load_data(limit=10)
+    data = data_handler.load_data()
     print(data)
