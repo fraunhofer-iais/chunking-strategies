@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 
 from datasets import load_dataset
 from tqdm import tqdm
@@ -14,7 +14,7 @@ class StitchedNewsQADataHandler(DataHandler):
     def __init__(self, minimum_context_characters: int):
         self.minimum_context_characters = minimum_context_characters
 
-    def load_data(self, limit: int) -> List[EvalSample]:
+    def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name, streaming=True)
         result = []
         document_id = 1  # Unique document ID counter
@@ -26,13 +26,13 @@ class StitchedNewsQADataHandler(DataHandler):
                 dataset=dataset,
                 document_id=document_id,
                 seen_documents=seen_documents,
-                limit= limit - counter
+                limit= limit - counter if limit is not None else None
             )
             result.extend(stitched_samples)
             document_id += len(stitched_samples)
             counter += len(stitched_samples)
 
-            if limit and counter >= limit:
+            if limit is not None and counter >= limit:
                 break
 
         return result
@@ -108,5 +108,5 @@ class StitchedNewsQADataHandler(DataHandler):
 
 if __name__ == '__main__':
     data_handler = StitchedNewsQADataHandler(minimum_context_characters=50000)
-    data = data_handler.load_data(limit=10)
+    data = data_handler.load_data()
     print(data)
