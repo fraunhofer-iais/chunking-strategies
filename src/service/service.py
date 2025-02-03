@@ -110,10 +110,11 @@ class Service:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the service with configurable chunk size.')
     parser.add_argument('--chunk_size', type=int, default=64, help='Chunk size for the splitter')
+    parser.add_argument('--eval_limit', type=int, default=None, help='Limit for # data points')
     args = parser.parse_args()
 
     splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
-    evaluator_config = EvaluatorConfig()
+    evaluator_config = EvaluatorConfig(eval_limit=args.eval_limit)
     embed_model_config = EmbedModelConfig()
     data_handler_config = NarrativeQADataHandlerConfig()
     vector_db_config = VectorDBConfig()
