@@ -45,9 +45,18 @@ class NarrativeQADataHandlerConfig(BaseModel):
     ...
 
 
-class SquadDataHandlerConfig(BaseModel):
-    minimum_context_characters: int = 1250 # minimum number of characters in a context to be considered for evaluation
+class StitchedSquadDataHandlerConfig(BaseModel):
+    minimum_context_characters: int = 50000 # minimum number of characters in a context to be considered for evaluation
+
+
+class StitchedTechQADataHandlerConfig(BaseModel):
+    minimum_context_characters: int = 50000
 
 
 class NQDataHandlerConfig(BaseModel):
-    ...
+    minimum_context_characters: int = 50000
+
+
+class StitchedNewsQADataHandlerConfig(BaseModel):
+    minimum_context_characters: int = 50000
+

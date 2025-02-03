@@ -6,8 +6,8 @@ from llama_index.core import Document
 from tqdm import tqdm
 
 from src.config.config import TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
-    EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, SquadDataHandlerConfig, VectorDBConfig, \
-    NQDataHandlerConfig
+    EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, StitchedSquadDataHandlerConfig, VectorDBConfig, \
+    NQDataHandlerConfig, StitchedNewsQADataHandlerConfig, StitchedTechQADataHandlerConfig
 from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
 from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory

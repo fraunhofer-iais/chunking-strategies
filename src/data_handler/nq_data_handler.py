@@ -1,7 +1,8 @@
 from typing import List, Tuple
+
+from bs4 import BeautifulSoup
 from datasets import load_dataset
 from tqdm import tqdm
-from bs4 import BeautifulSoup
 
 from src.data_handler.data_handler import DataHandler
 from src.dto.dto import EvalSample, Answer
@@ -10,8 +11,8 @@ from src.dto.dto import EvalSample, Answer
 class NQDataHandler(DataHandler):
     dataset_name: str = "google-research-datasets/natural_questions"
 
-    def __init__(self):
-        ...
+    def __init__(self, minimum_context_characters: int):
+        self.minimum_context_characters = minimum_context_characters
 
     def load_data(self, limit: int) -> List[EvalSample]:
         ds = load_dataset(self.dataset_name, streaming=True)
@@ -24,7 +25,6 @@ class NQDataHandler(DataHandler):
             counter += len(current_relevant_data)
             if limit and counter >= limit:
                 break
-
         return result
 
     def _extract_relevant_data_from_dict(self, dataset, counter: int, limit: int) -> List[EvalSample]:
@@ -40,6 +40,8 @@ class NQDataHandler(DataHandler):
             unique_doc_ids.add(doc_id)
 
             doc_text = BeautifulSoup(document["html"], "html.parser").get_text()
+            if len(doc_text) <= self.minimum_context_characters:
+                continue
 
             short_answers = dataset_sample["annotations"]["short_answers"]  # Ensure annotations exist
             if not short_answers or "text" not in short_answers[0] or not short_answers[0]["text"]:
@@ -82,6 +84,6 @@ class NQDataHandler(DataHandler):
 
 
 if __name__ == "__main__":
-    data_handler = NQDataHandler()
+    data_handler = NQDataHandler(minimum_context_characters=50000)
     data = data_handler.load_data(limit=10)
     print(data)
