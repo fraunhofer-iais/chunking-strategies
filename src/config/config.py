@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import List, Union, Optional
 
 from pydantic import BaseModel
@@ -43,33 +44,32 @@ class EvaluatorConfig(BaseModel):
     output_dir: str = "output"
 
 
-class NarrativeQADataHandlerConfig(BaseModel):
+class DataHandlerConfig(BaseModel, ABC):
     ...
 
 
-class StitchedSquadDataHandlerConfig(BaseModel):
+class NarrativeQADataHandlerConfig(DataHandlerConfig):
+    ...
+
+
+class StitchedSquadDataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000 # minimum number of characters in a context to be considered for evaluation
 
 
-class StitchedTechQADataHandlerConfig(BaseModel):
+class StitchedTechQADataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
-class NQDataHandlerConfig(BaseModel):
+class NQDataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
-class StitchedNewsQADataHandlerConfig(BaseModel):
+class StitchedNewsQADataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
-class HybridDataHandlerConfig(BaseModel):
-    handler_configs: List[Union[
-    StitchedSquadDataHandlerConfig,
-    StitchedTechQADataHandlerConfig,
-    StitchedNewsQADataHandlerConfig,
-    NQDataHandlerConfig,
-    NarrativeQADataHandlerConfig]] = \
-        [StitchedSquadDataHandlerConfig, StitchedTechQADataHandlerConfig] # List of individual handler configurations
+class HybridDataHandlerConfig(DataHandlerConfig):
+    handler_configs: List[DataHandlerConfig] = \
+        [StitchedSquadDataHandlerConfig(), StitchedTechQADataHandlerConfig()]
     limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
 

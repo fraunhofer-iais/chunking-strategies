@@ -7,7 +7,8 @@ from tqdm import tqdm
 
 from src.config.config import TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
     EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, StitchedSquadDataHandlerConfig, VectorDBConfig, \
-    NQDataHandlerConfig, StitchedNewsQADataHandlerConfig, StitchedTechQADataHandlerConfig, HybridDataHandlerConfig
+    NQDataHandlerConfig, StitchedNewsQADataHandlerConfig, StitchedTechQADataHandlerConfig, HybridDataHandlerConfig, \
+    DataHandlerConfig
 from src.data_handler.stitched_squad_data_handler import StitchedSquadDataHandler
 from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
 from src.factory.data_handler_factory import DataHandlerFactory
@@ -23,9 +24,7 @@ class Service:
                  splitter_config: TokenSplitterConfig | SentenceSplitterConfig | SemanticSplitterConfig,
                  evaluator_config: EvaluatorConfig,
                  embed_model_config: EmbedModelConfig,
-                 data_handler_config: NarrativeQADataHandlerConfig | StitchedSquadDataHandler |
-                                      StitchedTechQADataHandlerConfig | StitchedNewsQADataHandlerConfig |
-                                      NQDataHandlerConfig | HybridDataHandlerConfig,
+                 data_handler_config: DataHandlerConfig,
                  vector_db_config: VectorDBConfig,
                  ):
         self.configs = [
@@ -119,16 +118,9 @@ if __name__ == '__main__':
     splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
     evaluator_config = EvaluatorConfig()
     embed_model_config = EmbedModelConfig()
-    data_handler_config = NarrativeQADataHandlerConfig()
+    #data_handler_config = NarrativeQADataHandlerConfig()
 
-    # data_handler_config = HybridDataHandlerConfig(
-    #     handler_configs=[
-    #         StitchedSquadDataHandlerConfig(minimum_context_characters=50000),
-    #         StitchedTechQADataHandlerConfig(minimum_context_characters=50000)
-    #     ],
-    #     limit_samples_per_dataset=2
-    # )
-
+    data_handler_config = HybridDataHandlerConfig()
     vector_db_config = VectorDBConfig()
     service = Service(embed_model_config=embed_model_config,
                       splitter_config=splitter_config,

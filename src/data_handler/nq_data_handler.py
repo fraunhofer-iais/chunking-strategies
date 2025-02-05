@@ -85,5 +85,5 @@ class NQDataHandler(DataHandler):
 
 if __name__ == "__main__":
     data_handler = NQDataHandler(minimum_context_characters=50000)
-    data = data_handler.load_data()
+    data = data_handler.load_data(limit=5)
     print(data)

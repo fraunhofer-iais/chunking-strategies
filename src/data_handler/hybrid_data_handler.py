@@ -1,20 +1,24 @@
 import random
 from typing import List, Optional
 
+from src.config.config import HybridDataHandlerConfig
 from src.data_handler.data_handler import DataHandler
 from src.data_handler.stitched_squad_data_handler import StitchedSquadDataHandler
 from src.data_handler.stitched_tech_qa_data_handler import StitchedTechQADataHandler
 from src.dto.dto import EvalSample, Answer
 
+
 class HybridDataHandler(DataHandler):
-    def __init__(self, handlers: List[DataHandler], limit_samples_per_dataset: int):
-        self.handlers = handlers
-        self.limit_samples_per_dataset = limit_samples_per_dataset # TODO: discuss how to handle limit and limit_samples_per_dataset
+    def __init__(self, config: HybridDataHandlerConfig):
+        self.config = config
+        self.limit_samples_per_dataset = self.config.limit_samples_per_dataset
 
     def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         all_samples = []
-        for handler in self.handlers:
-            samples = handler.load_data(self.limit_samples_per_dataset)
+        for handler_config in self.config.handler_configs:
+            from src.factory.data_handler_factory import DataHandlerFactory
+            data_handler = DataHandlerFactory.create(handler_config)
+            samples = data_handler.load_data(limit=self.limit_samples_per_dataset)
             all_samples.append(samples)
         return self._create_hybrid_samples(all_samples, limit)
 
@@ -37,28 +41,33 @@ class HybridDataHandler(DataHandler):
 
             stitched_document = stitched_document.strip()
 
-            # Randomly select a question-answer pair from the same sample
-            if all_questions and all_answers:
-                random_index = random.randint(0, len(all_questions) - 1)
-                chosen_question = all_questions[random_index]
-                chosen_answer = all_answers[random_index]
+            valid_questions = []
+            valid_answers = []
 
+            for question, answer in zip(all_questions, all_answers):
+                if stitched_document.lower().count(answer.answer.lower()) == 1:
+                    valid_questions.append(question)
+                    valid_answers.append(answer)
+
+            if valid_questions and valid_answers:
                 hybrid_samples.append(
                     EvalSample(
                         document_id=f"hybrid_{i+1}",
                         document=stitched_document,
-                        questions=[chosen_question],
-                        answers=[Answer(answer=chosen_answer.answer, start=chosen_answer.start, end=chosen_answer.end)],
+                        questions=valid_questions,
+                        answers=valid_answers,
                     )
                 )
 
         return hybrid_samples
 
 if __name__ == '__main__':
-    handler1 = StitchedSquadDataHandler(minimum_context_characters=50000)
-    handler2 = StitchedTechQADataHandler(minimum_context_characters=50000)
-
-    handlers = [handler1, handler2]
-    hybrid_handler = HybridDataHandler(handlers, limit_samples_per_dataset =2)
-    hybrid_data = hybrid_handler.load_data()
+    handler1_config = StitchedSquadDataHandler(minimum_context_characters=50000)
+    handler2_config = StitchedTechQADataHandler(minimum_context_characters=50000)
+    hybrid_config = HybridDataHandlerConfig(
+        handler_configs=[handler1_config, handler2_config],
+        limit_samples_per_dataset=2
+    )
+    hybrid_handler = HybridDataHandler(hybrid_config)
+    hybrid_data = hybrid_handler.load_data(limit=5)
     print(hybrid_data)
