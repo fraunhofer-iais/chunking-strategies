@@ -48,7 +48,7 @@ class StitchedTechQADataHandler(DataHandler):
             document = dataset_sample[1]["document"]
             question = dataset_sample[1]["question"]
             answer_data = dataset_sample[1]["answer"]
-            answer = self.get_answer(answer_data)
+            answer = self._get_answer(answer_data)
 
             # Skip duplicate documents
             if document in seen_documents:
@@ -101,7 +101,7 @@ class StitchedTechQADataHandler(DataHandler):
 
         return stitched_doc, valid_qas  # Return stitched doc with all questions and answers
 
-    def get_answer(self, answer: str) -> Answer:
+    def _get_answer(self, answer: str) -> Answer:
         return Answer(
             answer=answer,
             start=0,

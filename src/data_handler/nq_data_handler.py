@@ -49,7 +49,7 @@ class NQDataHandler(DataHandler):
 
             answer_text = short_answers[0]["text"][0]
 
-            span = self.get_span(doc=doc_text, answer=answer_text)
+            span = self._get_span(doc=doc_text, answer=answer_text)
             if not span:
                 continue
 
@@ -65,7 +65,7 @@ class NQDataHandler(DataHandler):
 
         return samples
 
-    def get_span(self, doc: str, answer: str) -> Tuple[int, int] | None:
+    def _get_span(self, doc: str, answer: str) -> Tuple[int, int] | None:
         """ Ensures only one extractive span per document """
         spans = []
         start = 0

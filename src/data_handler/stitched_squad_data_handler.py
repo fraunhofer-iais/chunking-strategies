@@ -48,7 +48,7 @@ class StitchedSquadDataHandler(DataHandler):
             document = dataset_sample[1]["context"]
             question = dataset_sample[1]["question"]
             answer_data = dataset_sample[1]["answers"]
-            answer = self.get_answer(answer_data)
+            answer = self._get_answer(answer_data)
 
             # Skip duplicate documents
             if document in seen_documents:
@@ -100,7 +100,7 @@ class StitchedSquadDataHandler(DataHandler):
 
         return stitched_doc, valid_qas  # Return stitched doc with all questions and answers
 
-    def get_answer(self, answer: dict) -> Answer:
+    def _get_answer(self, answer: dict) -> Answer:
         """ Extracts the first answer span from the dataset """
         return Answer(
             answer=answer["text"][0],
