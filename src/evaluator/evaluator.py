@@ -10,11 +10,10 @@ class Evaluator:
     def __init__(self, evaluator_config: EvaluatorConfig):
         self.evaluator_config = evaluator_config
 
-    def evaluate(self, eval_sample: EvalSample, retrieved_paragraphs: List[RetrieverResult]) -> EvalResult:
+    def evaluate(self, eval_sample: EvalSample, retrieved_paragraphs: List[RetrieverResult], k:int) -> EvalResult:
         """
         Evaluates the retrieval performance of the retriever model by comparing the predicted paragraphs
         """
-        k = len(retrieved_paragraphs[0].paragraphs)
         recalls_for_all_questions = []
         for question, answer, retrieved_paragraph in zip(eval_sample.questions, eval_sample.answers,
                                                          retrieved_paragraphs):

@@ -18,7 +18,7 @@ class JsonReader:
         Returns:
           A dictionary of JSON filenames mapped to a list of evaluation samples.
         """
-        json_files = [f for f in os.listdir(self._config.json_dir) if f.endswith('.json') and "configs.json" not in f]
+        json_files = [f for f in os.listdir(self._config.json_dir) if f.endswith('.json') and "configs.json" not in f and "scores.json" not in f]
         json_data = {}
         for file in json_files:
             file_path = os.path.join(self._config.json_dir, file)
