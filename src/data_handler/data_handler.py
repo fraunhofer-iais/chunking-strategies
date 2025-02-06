@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import List
+from typing import List, Optional
 
 from src.dto.dto import EvalSample
 

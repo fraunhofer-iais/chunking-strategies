@@ -1,3 +1,6 @@
+from abc import ABC
+from typing import List, Union, Optional
+
 from pydantic import BaseModel
 
 from src.constants.constants import STELLA_EN_1_5B_V5, SNOWFLAKE
@@ -41,12 +44,35 @@ class EvaluatorConfig(BaseModel):
     output_dir: str = "output"
 
 
-class NarrativeQADataHandlerConfig(BaseModel):
+class DataHandlerConfig(BaseModel, ABC):
     ...
 
 
-class SquadDataHandlerConfig(BaseModel):
-    minimum_context_characters: int = 1250 # minimum number of characters in a context to be considered for evaluation
+class NarrativeQADataHandlerConfig(DataHandlerConfig):
+    ...
+
+
+class StitchedSquadDataHandlerConfig(DataHandlerConfig):
+    minimum_context_characters: int = 50000 # minimum number of characters in a context to be considered for evaluation
+
+
+class StitchedTechQADataHandlerConfig(DataHandlerConfig):
+    minimum_context_characters: int = 50000
+
+
+class NQDataHandlerConfig(DataHandlerConfig):
+    minimum_context_characters: int = 50000
+
+
+class StitchedNewsQADataHandlerConfig(DataHandlerConfig):
+    minimum_context_characters: int = 50000
+
+
+class HybridDataHandlerConfig(DataHandlerConfig):
+    handler_configs: List[DataHandlerConfig] = \
+        [StitchedSquadDataHandlerConfig(), StitchedTechQADataHandlerConfig()]
+    limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
+
 
 
 class JsonReaderConfig(BaseModel):
