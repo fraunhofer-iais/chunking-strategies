@@ -12,7 +12,7 @@ from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory
 from src.factory.evaluator_factory import EvaluatorFactory
 from src.factory.splitter_factory import SplitterFactory
-from src.utils import mean_of_lists, create_dir_if_not_exists
+from src.utils import mean_of_lists, create_dir_if_not_exists, current_datetime
 from src.vector_db.vector_db import VectorDB
 
 
@@ -52,7 +52,7 @@ class Service:
                 retrieved_documents = self._retrieve(query=question, vector_db=vector_db, answer=answer.answer,
                                                      document_id=sample.document_id)
                 doc_results.append(retrieved_documents)
-            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results)
+            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results, k=self.vector_db_config.similarity_top_k)
             eval_results.append(result)
             self.save(eval_result=result, file_path=directory)
         averages = self._compute_average_recall(eval_results)
@@ -71,7 +71,7 @@ class Service:
         return retrieved_paragraphs
 
     def _construct_dir(self):
-        return self.evaluator.evaluator_config.output_dir + f'/chunk_size_{self.text_splitter.chunk_size}_{self.text_splitter.__class__.__name__}_{self.data_handler.__class__.__name__}.json'
+        return self.evaluator.evaluator_config.output_dir + f'/{current_datetime()}/chunk_size_{self.text_splitter.chunk_size}_{self.text_splitter.__class__.__name__}_{self.data_handler.__class__.__name__}.json'
 
     def save(self, file_path: str, eval_result: EvalResult):
         create_dir_if_not_exists(file_path)
@@ -110,10 +110,11 @@ class Service:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the service with configurable chunk size.')
     parser.add_argument('--chunk_size', type=int, default=64, help='Chunk size for the splitter')
+    parser.add_argument('--eval_limit', type=int, default=None, help='Limit for # data points')
     args = parser.parse_args()
 
     splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
-    evaluator_config = EvaluatorConfig()
+    evaluator_config = EvaluatorConfig(eval_limit=args.eval_limit)
     embed_model_config = EmbedModelConfig()
     data_handler_config = NarrativeQADataHandlerConfig()
     vector_db_config = VectorDBConfig()
