@@ -3,7 +3,7 @@ from typing import List, Union, Optional
 
 from pydantic import BaseModel
 
-from src.constants.constants import STELLA_EN_1_5B_V5
+from src.constants.constants import STELLA_EN_1_5B_V5, SNOWFLAKE
 
 
 class VectorDBConfig(BaseModel):
@@ -12,7 +12,7 @@ class VectorDBConfig(BaseModel):
 
 
 class EmbedModelConfig(BaseModel):
-    embed_model_name: str = STELLA_EN_1_5B_V5
+    embed_model_name: str = SNOWFLAKE
     embed_model_device: str = "cuda"
 
 
@@ -39,8 +39,8 @@ class SentenceSplitterConfig(BaseModel):
 
 
 class EvaluatorConfig(BaseModel):
-    eval_start: int = None
-    eval_limit: int = None
+    eval_start: int | None = None
+    eval_limit: int | None = None
     output_dir: str = "output"
 
 
@@ -73,3 +73,7 @@ class HybridDataHandlerConfig(DataHandlerConfig):
         [StitchedSquadDataHandlerConfig(), StitchedTechQADataHandlerConfig()]
     limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
 
+
+
+class JsonReaderConfig(BaseModel):
+    json_dir: str = "../output/snowflake"
