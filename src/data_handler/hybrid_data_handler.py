@@ -5,7 +5,6 @@ from src.data_handler.data_handler import DataHandler
 from src.data_handler.stitched_squad_data_handler import StitchedSquadDataHandler
 from src.data_handler.stitched_tech_qa_data_handler import StitchedTechQADataHandler
 from src.dto.dto import EvalSample
-from src.factory.data_handler_factory import DataHandlerFactory
 
 
 class HybridDataHandler(DataHandler):
@@ -16,6 +15,7 @@ class HybridDataHandler(DataHandler):
     def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         all_samples = []
         for handler_config in self.config.handler_configs:
+            from src.factory.data_handler_factory import DataHandlerFactory
             data_handler = DataHandlerFactory.create(handler_config)
             samples = data_handler.load_data(limit=self.limit_samples_per_dataset)
             all_samples.append(samples)
