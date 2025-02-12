@@ -12,7 +12,7 @@ class VectorDBConfig(BaseModel):
 
 
 class EmbedModelConfig(BaseModel):
-    embed_model_name: str = SNOWFLAKE
+    embed_model_name: str = STELLA_EN_1_5B_V5
     embed_model_device: str = "cuda"
 
 
@@ -53,14 +53,14 @@ class NarrativeQADataHandlerConfig(DataHandlerConfig):
 
 
 class StitchedSquadDataHandlerConfig(DataHandlerConfig):
-    minimum_context_characters: int = 50000 # minimum number of characters in a context to be considered for evaluation
+    minimum_context_characters: int = 50000  # minimum number of characters in a context to be considered for evaluation
 
 
 class StitchedTechQADataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
-class NQDataHandlerConfig(DataHandlerConfig):
+class NQDataHandlerConfig(DataHandlerConfig): # todo run experiments
     minimum_context_characters: int = 50000
 
 
@@ -70,9 +70,12 @@ class StitchedNewsQADataHandlerConfig(DataHandlerConfig):
 
 class HybridDataHandlerConfig(DataHandlerConfig):
     handler_configs: List[DataHandlerConfig] = \
-        [StitchedSquadDataHandlerConfig(), StitchedTechQADataHandlerConfig()]
-    limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
-
+        [
+            StitchedSquadDataHandlerConfig(),
+            StitchedTechQADataHandlerConfig(),
+            StitchedNewsQADataHandlerConfig(),
+        ]
+    limit_samples_per_dataset: int | None = None  # maximum number of samples to be processed from each individual dataset
 
 
 class JsonReaderConfig(BaseModel):
