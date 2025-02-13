@@ -16,6 +16,7 @@ class HybridDataHandler(DataHandler):
         all_samples = []
         from src.factory.data_handler_factory import DataHandlerFactory
         for handler_config in self.config.handler_configs:
+            from src.factory.data_handler_factory import DataHandlerFactory
             data_handler = DataHandlerFactory.create(handler_config)
             samples = data_handler.load_data(limit=self.limit_samples_per_dataset)
             all_samples.append(samples)

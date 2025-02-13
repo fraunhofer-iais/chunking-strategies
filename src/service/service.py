@@ -8,7 +8,7 @@ from tqdm import tqdm
 from src.config.config import TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
     EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, StitchedSquadDataHandlerConfig, VectorDBConfig, \
     NQDataHandlerConfig, StitchedNewsQADataHandlerConfig, StitchedTechQADataHandlerConfig, HybridDataHandlerConfig, \
-    DataHandlerConfig
+    DataHandlerConfig, StitchedCovidQADataHandlerConfig
 from src.data_handler.stitched_squad_data_handler import StitchedSquadDataHandler
 from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
 from src.factory.data_handler_factory import DataHandlerFactory

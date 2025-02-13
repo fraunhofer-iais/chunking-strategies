@@ -68,6 +68,10 @@ class StitchedNewsQADataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
+class StitchedCovidQADataHandlerConfig(DataHandlerConfig):
+    minimum_context_characters: int = 50000
+
+
 class HybridDataHandlerConfig(DataHandlerConfig):
     handler_configs: List[DataHandlerConfig] = \
         [
