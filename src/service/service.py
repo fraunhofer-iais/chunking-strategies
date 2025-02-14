@@ -55,7 +55,8 @@ class Service:
                 retrieved_documents = self._retrieve(query=question, vector_db=vector_db, answer=answer.answer,
                                                      document_id=sample.document_id)
                 doc_results.append(retrieved_documents)
-            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results, k=self.vector_db_config.similarity_top_k)
+            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results,
+                                             k=self.vector_db_config.similarity_top_k)
             eval_results.append(result)
             self.save(eval_result=result, file_path=directory)
         averages = self._compute_average_recall(eval_results)
@@ -119,9 +120,9 @@ if __name__ == '__main__':
     splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
     evaluator_config = EvaluatorConfig(eval_limit=args.eval_limit)
     embed_model_config = EmbedModelConfig()
-    #data_handler_config = NarrativeQADataHandlerConfig()
-
-    data_handler_config = HybridDataHandlerConfig()
+    # data_handler_config = NarrativeQADataHandlerConfig()
+    # data_handler_config = HybridDataHandlerConfig()
+    data_handler_config = NQDataHandlerConfig()
     vector_db_config = VectorDBConfig()
     service = Service(embed_model_config=embed_model_config,
                       splitter_config=splitter_config,
