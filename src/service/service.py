@@ -77,7 +77,7 @@ class Service:
                     sample.document_id,
                     question,
                     answer=answer.answer,
-                    retriever_result=retrieved_documents,
+                    retriever_result=retrieved_documents.paragraphs,
                     k=self.vector_db_config.similarity_top_k,
                 )
                 self._save_eval_result(eval_result=question_eval_result, file_path=directory.replace(".json", "_question_eval.json"))
