@@ -1,6 +1,5 @@
-from typing import List, Dict
+from typing import List, Set
 
-from datasets import load_dataset
 from tqdm import tqdm
 
 from src.data_handler.data_handler import DataHandler
@@ -10,24 +9,14 @@ from src.dto.dto import EvalSample, Answer
 class NarrativeQADataHandler(DataHandler):
     dataset_name: str = "deepmind/narrativeqa"
 
-    def load_data(self, limit: int) -> List[EvalSample]:
-        ds = load_dataset(self.dataset_name, streaming=True)
-        result = []
-        counter = 0
-        for dataset in ds.values():
-            current_relevant_data = self._extract_relevant_data_from_dict(dataset=dataset, counter=counter,
-                                                                          limit=limit)
-            result.extend(current_relevant_data)
-            counter += len(current_relevant_data)
-            if limit and counter >= limit:
-                break
-        return result
-
-    def _extract_relevant_data_from_dict(self, dataset: Dict, counter: int, limit: int) -> List[EvalSample]:
+    def _extract_documents(self, dataset, document_id: int, seen_documents: Set[str], limit: int, pbar: tqdm) -> List[
+        EvalSample]:
         unique_doc_ids = []
         samples = []
-        for dataset_sample in enumerate(tqdm(dataset)):
-            document =  dataset_sample[1]["document"]
+        counter = len(seen_documents)
+        for dataset_sample in enumerate(dataset):
+            pbar.update(1)
+            document = dataset_sample[1]["document"]
             doc_id = document["id"]
             doc = document["text"]
             answer = dataset_sample[1]["answers"][0]["text"]

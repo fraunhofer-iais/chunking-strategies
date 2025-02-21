@@ -16,19 +16,23 @@ class EmbedModelConfig(BaseModel):
     embed_model_device: str = "cuda"
 
 
-class SemanticSplitterConfig(BaseModel):
+class SplitterConfig(BaseModel, ABC):
+    ...
+
+
+class SemanticSplitterConfig(SplitterConfig):
     buffer_size: int = 5  # number of sentences to group together when evaluating semantic similarity
     breakpoint_percentile_threshold: int = 95  # The percentile of cosine dissimilarity that must be exceeded between
     # a group of sentences and the next to form a node.  The smaller this number is, the more nodes will be generated.
 
 
-class TokenSplitterConfig(BaseModel):
+class TokenSplitterConfig(SplitterConfig):
     chunk_size: int
     chunk_overlap: int = None
     separator: str = ' '
 
 
-class SentenceSplitterConfig(BaseModel):
+class SentenceSplitterConfig(SplitterConfig):
     chunk_size: int
     chunk_overlap: int = None
     include_metadata: bool = True
@@ -60,7 +64,7 @@ class StitchedTechQADataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 
-class NQDataHandlerConfig(DataHandlerConfig): # todo run experiments
+class NQDataHandlerConfig(DataHandlerConfig):
     minimum_context_characters: int = 50000
 
 

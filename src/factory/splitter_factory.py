@@ -1,13 +1,13 @@
 from llama_index.core import Settings
 from llama_index.core.node_parser import SemanticSplitterNodeParser, SentenceSplitter, NodeParser, TokenTextSplitter
 
-from src.config.config import TokenSplitterConfig, SentenceSplitterConfig, SemanticSplitterConfig
+from src.config.config import TokenSplitterConfig, SentenceSplitterConfig, SemanticSplitterConfig, SplitterConfig
 
 
 class SplitterFactory:
 
     @staticmethod
-    def create(splitter_config: SemanticSplitterConfig | TokenSplitterConfig | SentenceSplitterConfig) -> NodeParser:
+    def create(splitter_config: SplitterConfig) -> NodeParser:
         if hasattr(splitter_config, "chunk_overlap") and splitter_config.chunk_overlap is None:
             splitter_config.chunk_overlap = splitter_config.chunk_size // 5
         if isinstance(splitter_config, TokenSplitterConfig):
