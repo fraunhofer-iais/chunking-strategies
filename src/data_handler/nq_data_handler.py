@@ -1,6 +1,6 @@
 from typing import List, Tuple, Set
 
-import lxml.html
+from lxml import html
 from tqdm import tqdm
 
 from src.data_handler.data_handler import DataHandler
@@ -27,7 +27,7 @@ class NQDataHandler(DataHandler):
                 continue
             unique_doc_ids.add(doc_id)
 
-            doc_text = lxml.html.fromstring(document["html"]).text_content()
+            doc_text = html.fromstring(document["html"]).text_content()
             if len(doc_text) <= self.minimum_context_characters:
                 continue
 
