@@ -70,7 +70,7 @@ class Service:
             result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results,
                                              k=self.vector_db_config.similarity_top_k)
             eval_results.append(result)
-            self.save(eval_result=result, file_path=directory)
+            # self.save(eval_result=result, file_path=directory) # todo: uncomment this line to save results
         averages = self._compute_average_recall(eval_results)
         self._save_average_recall(filename=directory.replace(".json", "_average_scores.json"), doc_result=averages)
         return eval_results
