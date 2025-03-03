@@ -81,4 +81,6 @@ class DataHandler(ABC):
         if directory is None:
             raise ValueError("HF_HOME environment variable is not set.")
         class_name = self.__class__.__name__
-        return directory + "/processed_chunking_datasets/" + class_name + ".pkl"
+        processed_directory = directory + "/processed_chunking_datasets/"
+        os.makedirs(processed_directory, exist_ok=True)
+        return processed_directory + class_name + ".pkl"
