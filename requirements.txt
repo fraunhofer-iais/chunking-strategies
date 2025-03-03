@@ -6,3 +6,4 @@ llama-index~=0.12.11
 nvitop~=1.4.1
 numpy~=2.2.2
 pytest~=8.3.4
+lxml~=5.3.1
