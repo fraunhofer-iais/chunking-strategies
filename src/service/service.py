@@ -86,7 +86,7 @@ class Service:
             document_eval_result = self.document_evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results,
                                              k=self.vector_db_config.similarity_top_k)
             document_eval_results.append(document_eval_result)
-            self._save_eval_result(eval_result=document_eval_result, file_path=directory)
+            # self._save_eval_result(eval_result=document_eval_result, file_path=directory)  todo: uncomment if you want to save the results for each document
         document_averages = self._compute_average_recall(document_eval_results)
         question_averages = self._compute_average_recall(question_eval_results)
         self._save_average_recall(filename=directory.replace(".json", "_average_scores.json"), doc_result=document_averages)
