@@ -1,13 +1,13 @@
 import argparse
 import json
-from typing import List
+from typing import Iterator, List
 
 from llama_index.core import Document
 from tqdm import tqdm
 
 from src.config.config import TokenSplitterConfig, DocumentEvaluatorConfig, QuestionEvaluatorConfig,  EmbedModelConfig, VectorDBConfig, \
     DataHandlerConfig, SplitterConfig
-from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
+from src.dto.dto import DocumentEvalResult, RetrieverResult, EvalSample, EvalResult, AverageDocResult
 from src.factory.data_handler_config_factory import DataHandlerConfigFactory
 from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory
@@ -46,7 +46,7 @@ class Service:
         self.question_evaluator = EvaluatorFactory.create(evaluator_config=question_evaluator_config)
         self.data_handler = DataHandlerFactory.create(data_handler_config=data_handler_config)
         # data is loaded here since it is then used for different chunk sizes
-        self.data: List[EvalSample] = self.data_handler.load_data(limit=self.evaluator.evaluator_config.eval_limit)
+        self.data: List[EvalSample] = self.data_handler.load_data(limit=self.document_evaluator.evaluator_config.eval_limit)
 
         self.embed_model = EmbedModelFactory.create(embed_model_config=embed_model_config)
 
@@ -61,7 +61,7 @@ class Service:
         directory = self._construct_dir(text_splitter=text_splitter)
         self._save_all_configs(filename=directory.replace(".json", "_configs.json"), splitter_config=splitter_config)
         for sample in tqdm(
-                self.data[self.evaluator.evaluator_config.eval_start:self.evaluator.evaluator_config.eval_limit]):
+                self.data[self.document_evaluator.evaluator_config.eval_start:self.document_evaluator.evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.vector_db_config.similarity_top_k,
                                  embed_model=self.embed_model, splitter=text_splitter,
@@ -77,7 +77,7 @@ class Service:
                     sample.document_id,
                     question,
                     answer=answer.answer,
-                    retriever_result=retrieved_documents.paragraphs,
+                    paragraphs=retrieved_documents.paragraphs,
                     k=self.vector_db_config.similarity_top_k,
                 )
                 self._save_eval_result(eval_result=question_eval_result, file_path=directory.replace(".json", "_question_eval.json"))
@@ -86,7 +86,7 @@ class Service:
             document_eval_result = self.document_evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results,
                                              k=self.vector_db_config.similarity_top_k)
             document_eval_results.append(document_eval_result)
-            # self.save(eval_result=result, file_path=directory) # todo: uncomment this line to save results
+            self._save_eval_result(eval_result=document_eval_result, file_path=directory)
         document_averages = self._compute_average_recall(document_eval_results)
         question_averages = self._compute_average_recall(question_eval_results)
         self._save_average_recall(filename=directory.replace(".json", "_average_scores.json"), doc_result=document_averages)
@@ -124,7 +124,9 @@ class Service:
         # Write back to the same JSON file
         with open(file_path, 'w') as f:
             json.dump(results, f, indent=4)
-        eval_result.eval_sample.document = saved_doc
+        # Restore the original document
+        if isinstance(eval_result, DocumentEvalResult):
+            eval_result.eval_sample.document = saved_doc
 
     def _save_all_configs(self, filename: str, splitter_config: SplitterConfig):
         configs_as_dicts = [splitter_config.model_dump()] + [config.model_dump() for config in self.configs]
@@ -146,7 +148,7 @@ class Service:
         return result
 
 
-def get_splitter_configs(chunk_sizes: List[int]) -> List[SplitterConfig]:
+def get_splitter_configs(chunk_sizes: List[int]) -> Iterator[SplitterConfig]:
     for chunk_size in chunk_sizes:
         yield TokenSplitterConfig(chunk_size=chunk_size)
 

@@ -5,7 +5,7 @@ from src.evaluator.document_evaluator import Evaluator
 
 
 class QuestionEvaluator(Evaluator):
-    def evaluate(self,document_id: str, question: str, answer: str, paragraphs: List[str], k:int) -> List[int]:
+    def evaluate(self, document_id: str, question: str, answer: str, paragraphs: List[str], k:int) -> List[int]:
         """
         Evaluates the retrieval performance of the retriever model for a single question.
         """
