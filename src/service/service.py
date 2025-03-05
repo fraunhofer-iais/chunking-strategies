@@ -5,12 +5,10 @@ from typing import List
 from llama_index.core import Document
 from tqdm import tqdm
 
-from src.config.config import TokenSplitterConfig, SemanticSplitterConfig, SentenceSplitterConfig, \
-    EvaluatorConfig, EmbedModelConfig, NarrativeQADataHandlerConfig, StitchedSquadDataHandlerConfig, VectorDBConfig, \
-    NQDataHandlerConfig, StitchedNewsQADataHandlerConfig, StitchedTechQADataHandlerConfig, HybridDataHandlerConfig, \
-    DataHandlerConfig, StitchedCovidQADataHandlerConfig
-from src.data_handler.stitched_squad_data_handler import StitchedSquadDataHandler
+from src.config.config import TokenSplitterConfig, EvaluatorConfig, EmbedModelConfig, VectorDBConfig, \
+    DataHandlerConfig, SplitterConfig
 from src.dto.dto import RetrieverResult, EvalSample, EvalResult, AverageDocResult
+from src.factory.data_handler_config_factory import DataHandlerConfigFactory
 from src.factory.data_handler_factory import DataHandlerFactory
 from src.factory.embed_model_factory import EmbedModelFactory
 from src.factory.evaluator_factory import EvaluatorFactory
@@ -21,43 +19,58 @@ from src.vector_db.vector_db import VectorDB
 
 class Service:
     def __init__(self,
-                 splitter_config: TokenSplitterConfig | SentenceSplitterConfig | SemanticSplitterConfig,
+                 splitter_configs: List[SplitterConfig],
                  evaluator_config: EvaluatorConfig,
                  embed_model_config: EmbedModelConfig,
                  data_handler_config: DataHandlerConfig,
                  vector_db_config: VectorDBConfig,
                  ):
+
+        # to save all configs to json
         self.configs = [
-            splitter_config,
             evaluator_config,
             embed_model_config,
             data_handler_config,
             vector_db_config,
         ]
-        self.vector_db_config = vector_db_config
-        self.evaluator = EvaluatorFactory.create(evaluator_config=evaluator_config)
-        self.text_splitter = SplitterFactory.create(splitter_config=splitter_config)
-        self.embed_model = EmbedModelFactory.create(embed_model_config=embed_model_config)
-        self.data_handler = DataHandlerFactory.create(data_handler_config=data_handler_config)
+        print(f"Running with configs: {self.configs}")
 
-    def run(self) -> List[EvalResult]:
-        data: List[EvalSample] = self.data_handler.load_data(limit=self.evaluator.evaluator_config.eval_limit)
+        # objects are instantiated later
+        self.vector_db_config = vector_db_config
+        self.splitter_configs = splitter_configs
+
+        # objects are instantiated here
+        self.evaluator = EvaluatorFactory.create(evaluator_config=evaluator_config)
+        self.data_handler = DataHandlerFactory.create(data_handler_config=data_handler_config)
+        # data is loaded here since it is then used for different chunk sizes
+        self.data: List[EvalSample] = self.data_handler.load_data(limit=self.evaluator.evaluator_config.eval_limit)
+
+        self.embed_model = EmbedModelFactory.create(embed_model_config=embed_model_config)
+
+    def run(self):
+        for splitter_config in self.splitter_configs:
+            self.run_with_one_text_splitter(splitter_config=splitter_config)
+
+    def run_with_one_text_splitter(self, splitter_config: SplitterConfig) -> List[EvalResult]:
+        text_splitter = SplitterFactory.create(splitter_config=splitter_config)
         eval_results = []
-        directory = self._construct_dir()
-        self._save_all_configs(filename=directory.replace(".json", "_configs.json"))
-        for sample in tqdm(data[self.evaluator.evaluator_config.eval_start:self.evaluator.evaluator_config.eval_limit]):
+        directory = self._construct_dir(text_splitter=text_splitter)
+        self._save_all_configs(filename=directory.replace(".json", "_configs.json"), splitter_config=splitter_config)
+        for sample in tqdm(
+                self.data[self.evaluator.evaluator_config.eval_start:self.evaluator.evaluator_config.eval_limit]):
             doc = Document(text=sample.document, doc_id=sample.document_id)
             vector_db = VectorDB(documents=[doc], k=self.vector_db_config.similarity_top_k,
-                                 embed_model=self.embed_model, splitter=self.text_splitter,
+                                 embed_model=self.embed_model, splitter=text_splitter,
                                  verbose=self.vector_db_config.verbose)
             doc_results = []
             for question, answer in zip(sample.questions, sample.answers):
                 retrieved_documents = self._retrieve(query=question, vector_db=vector_db, answer=answer.answer,
                                                      document_id=sample.document_id)
                 doc_results.append(retrieved_documents)
-            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results, k=self.vector_db_config.similarity_top_k)
+            result = self.evaluator.evaluate(eval_sample=sample, retrieved_paragraphs=doc_results,
+                                             k=self.vector_db_config.similarity_top_k)
             eval_results.append(result)
-            self.save(eval_result=result, file_path=directory)
+            # self.save(eval_result=result, file_path=directory) # todo: uncomment this line to save results
         averages = self._compute_average_recall(eval_results)
         self._save_average_recall(filename=directory.replace(".json", "_average_scores.json"), doc_result=averages)
         return eval_results
@@ -73,8 +86,8 @@ class Service:
         )
         return retrieved_paragraphs
 
-    def _construct_dir(self):
-        return self.evaluator.evaluator_config.output_dir + f'/{current_datetime()}/chunk_size_{self.text_splitter.chunk_size}_{self.text_splitter.__class__.__name__}_{self.data_handler.__class__.__name__}.json'
+    def _construct_dir(self, text_splitter) -> str:
+        return self.evaluator.evaluator_config.output_dir + f'/{current_datetime()}/chunk_size_{text_splitter.chunk_size}_{text_splitter.__class__.__name__}_{self.data_handler.__class__.__name__}.json'
 
     def save(self, file_path: str, eval_result: EvalResult):
         create_dir_if_not_exists(file_path)
@@ -85,14 +98,16 @@ class Service:
         except (FileNotFoundError, json.JSONDecodeError):
             results = []
         # Append new result
+        saved_doc = eval_result.eval_sample.document
         eval_result.eval_sample.document = "check ID for document"
         results.append(eval_result.model_dump())
         # Write back to the same JSON file
         with open(file_path, 'w') as f:
             json.dump(results, f, indent=4)
+        eval_result.eval_sample.document = saved_doc
 
-    def _save_all_configs(self, filename: str):
-        configs_as_dicts = [config.model_dump() for config in self.configs]
+    def _save_all_configs(self, filename: str, splitter_config: SplitterConfig):
+        configs_as_dicts = [splitter_config.model_dump()] + [config.model_dump() for config in self.configs]
         create_dir_if_not_exists(filename)
         with open(filename, 'w') as f:
             json.dump(configs_as_dicts, f, indent=4)
@@ -110,23 +125,27 @@ class Service:
         return result
 
 
+def get_splitter_configs(chunk_sizes: List[int]) -> List[SplitterConfig]:
+    for chunk_size in chunk_sizes:
+        yield TokenSplitterConfig(chunk_size=chunk_size)
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run the service with configurable chunk size.')
-    parser.add_argument('--chunk_size', type=int, default=64, help='Chunk size for the splitter')
+    parser = argparse.ArgumentParser(description='Run the service.')
     parser.add_argument('--eval_limit', type=int, default=None, help='Limit for # data points')
+    parser.add_argument('--data_handler_name', type=str, default="nq", help='Data handler to use')
+    parser.add_argument('--chunk_sizes', type=int, nargs='+', default=[64, 128, 256, 512, 1024], help='List of chunk sizes to use')
+
     args = parser.parse_args()
-
-    splitter_config = TokenSplitterConfig(chunk_size=args.chunk_size)
+    splitter_configs = get_splitter_configs(chunk_sizes=args.chunk_sizes)
     evaluator_config = EvaluatorConfig(eval_limit=args.eval_limit)
+    data_handler_config = DataHandlerConfigFactory.create(args.data_handler_name)
     embed_model_config = EmbedModelConfig()
-    #data_handler_config = NarrativeQADataHandlerConfig()
-
-    data_handler_config = HybridDataHandlerConfig()
     vector_db_config = VectorDBConfig()
     service = Service(embed_model_config=embed_model_config,
-                      splitter_config=splitter_config,
+                      splitter_configs=splitter_configs,
                       evaluator_config=evaluator_config,
                       data_handler_config=data_handler_config,
                       vector_db_config=vector_db_config,
                       )
-    responses = service.run()
+    service.run()

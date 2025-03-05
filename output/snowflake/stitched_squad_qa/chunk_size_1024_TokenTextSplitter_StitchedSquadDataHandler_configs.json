@@ -1,0 +1,23 @@
+[
+    {
+        "chunk_size": 1024,
+        "chunk_overlap": 204,
+        "separator": " "
+    },
+    {
+        "eval_start": null,
+        "eval_limit": null,
+        "output_dir": "output"
+    },
+    {
+        "embed_model_name": "Snowflake/snowflake-arctic-embed-l-v2.0",
+        "embed_model_device": "cuda"
+    },
+    {
+        "minimum_context_characters": 50000
+    },
+    {
+        "similarity_top_k": 5,
+        "verbose": false
+    }
+]

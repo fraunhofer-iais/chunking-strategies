@@ -12,23 +12,27 @@ class VectorDBConfig(BaseModel):
 
 
 class EmbedModelConfig(BaseModel):
-    embed_model_name: str = SNOWFLAKE
+    embed_model_name: str = STELLA_EN_1_5B_V5
     embed_model_device: str = "cuda"
 
 
-class SemanticSplitterConfig(BaseModel):
+class SplitterConfig(BaseModel, ABC):
+    ...
+
+
+class SemanticSplitterConfig(SplitterConfig):
     buffer_size: int = 5  # number of sentences to group together when evaluating semantic similarity
     breakpoint_percentile_threshold: int = 95  # The percentile of cosine dissimilarity that must be exceeded between
     # a group of sentences and the next to form a node.  The smaller this number is, the more nodes will be generated.
 
 
-class TokenSplitterConfig(BaseModel):
+class TokenSplitterConfig(SplitterConfig):
     chunk_size: int
     chunk_overlap: int = None
     separator: str = ' '
 
 
-class SentenceSplitterConfig(BaseModel):
+class SentenceSplitterConfig(SplitterConfig):
     chunk_size: int
     chunk_overlap: int = None
     include_metadata: bool = True
@@ -53,7 +57,7 @@ class NarrativeQADataHandlerConfig(DataHandlerConfig):
 
 
 class StitchedSquadDataHandlerConfig(DataHandlerConfig):
-    minimum_context_characters: int = 50000 # minimum number of characters in a context to be considered for evaluation
+    minimum_context_characters: int = 50000  # minimum number of characters in a context to be considered for evaluation
 
 
 class StitchedTechQADataHandlerConfig(DataHandlerConfig):
@@ -74,9 +78,12 @@ class StitchedCovidQADataHandlerConfig(DataHandlerConfig):
 
 class HybridDataHandlerConfig(DataHandlerConfig):
     handler_configs: List[DataHandlerConfig] = \
-        [StitchedSquadDataHandlerConfig(), StitchedTechQADataHandlerConfig()]
-    limit_samples_per_dataset: int = 2 # maximum number of samples to be processed from each individual dataset
-
+        [
+            StitchedSquadDataHandlerConfig(),
+            StitchedTechQADataHandlerConfig(),
+            StitchedNewsQADataHandlerConfig(),
+        ]
+    limit_samples_per_dataset: int | None = None  # maximum number of samples to be processed from each individual dataset
 
 
 class JsonReaderConfig(BaseModel):

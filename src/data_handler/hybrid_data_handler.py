@@ -14,6 +14,7 @@ class HybridDataHandler(DataHandler):
 
     def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
         all_samples = []
+        from src.factory.data_handler_factory import DataHandlerFactory
         for handler_config in self.config.handler_configs:
             from src.factory.data_handler_factory import DataHandlerFactory
             data_handler = DataHandlerFactory.create(handler_config)
@@ -51,7 +52,7 @@ class HybridDataHandler(DataHandler):
             if valid_questions and valid_answers:
                 hybrid_samples.append(
                     EvalSample(
-                        document_id=f"hybrid_{i+1}",
+                        document_id=f"hybrid_{i + 1}",
                         document=stitched_document,
                         questions=valid_questions,
                         answers=valid_answers,
@@ -59,6 +60,7 @@ class HybridDataHandler(DataHandler):
                 )
 
         return hybrid_samples
+
 
 if __name__ == '__main__':
     handler1_config = StitchedSquadDataHandler(minimum_context_characters=50000)

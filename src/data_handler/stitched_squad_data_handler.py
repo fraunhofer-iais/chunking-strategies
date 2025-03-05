@@ -1,7 +1,6 @@
 import random
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Set, Tuple
 
-from datasets import load_dataset
 from tqdm import tqdm
 
 from src.data_handler.data_handler import DataHandler
@@ -9,42 +8,21 @@ from src.dto.dto import EvalSample, Answer
 
 
 class StitchedSquadDataHandler(DataHandler):
+
     dataset_name: str = "lhoestq/squad"
 
     def __init__(self, minimum_context_characters: int):
         self.minimum_context_characters = minimum_context_characters
 
-    def load_data(self, limit: Optional[int] = None) -> List[EvalSample]:
-        ds = load_dataset(self.dataset_name, streaming=True)
-        result = []
-        document_id = 1  # Unique document ID counter
-        seen_documents: Set[str] = set()  # Store seen documents to avoid duplicates
-        counter = 0
-
-        for dataset in ds.values():
-            stitched_samples = self._extract_and_stitch_documents(
-                dataset=dataset,
-                document_id=document_id,
-                seen_documents=seen_documents,
-                limit= limit - counter if limit is not None else None
-            )
-            result.extend(stitched_samples)
-            document_id += len(stitched_samples)
-            counter += len(stitched_samples)
-
-            if limit is not None and counter >= limit:
-                break
-
-        return result
-
-    def _extract_and_stitch_documents(self, dataset, document_id: int, seen_documents: Set[str], limit: int) \
+    def _extract_documents(self, dataset, document_id: int, seen_documents: Set[str], limit: int, pbar: tqdm) \
             -> List[EvalSample]:
         buffer = []  # Store short documents for stitching
         samples = []
 
-        for dataset_sample in enumerate(tqdm(dataset)):
+        for dataset_sample in enumerate(dataset):
             if limit and len(samples) >= limit:
                 break
+            pbar.update(1)
             document = dataset_sample[1]["context"]
             question = dataset_sample[1]["question"]
             answer_data = dataset_sample[1]["answers"]
