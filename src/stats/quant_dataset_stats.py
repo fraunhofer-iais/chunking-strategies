@@ -22,19 +22,23 @@ def get_avg_document_length(dataset: List[Dict]) -> float:
 
 def get_avg_question_length(dataset: List[Dict]) -> float:
     total_length = 0
+    num_questions = 0
     for sample in dataset:
         for question in sample["questions"]:
             total_length += len(question)
-    return total_length / len(dataset)
+            num_questions += 1
+    return total_length / num_questions
 
 
 def get_avg_answer_length(dataset: List[Dict]) -> float:
     total_length = 0
+    num_answers = 0
     for sample in dataset:
         for answer_data in sample["answers"]:
             answer = answer_data["answer"]
             total_length += len(answer)
-    return total_length / len(dataset)
+            num_answers += 1
+    return total_length / num_answers
 
 
 def get_avg_num_of_questions(dataset: List[Dict]) -> float:
@@ -71,18 +75,22 @@ def get_avg_num_tokens(dataset: List[Dict]) -> float:
 
 def get_avg_num_tokens_questions(dataset: List[Dict]) -> float:
     total_tokens = 0
+    num_questions = 0
     for sample in dataset:
         for question in sample["questions"]:
             total_tokens += len(tokenize(question))
-    return total_tokens / len(dataset)
+            num_questions += 1
+    return total_tokens / num_questions
 
 def get_avg_num_tokens_answers(dataset: List[Dict]) -> float:
     total_tokens = 0
+    num_answers = 0
     for sample in dataset:
         for answer_data in sample["answers"]:
             answer = answer_data["answer"]
             total_tokens += len(tokenize(answer))
-    return total_tokens / len(dataset)
+            num_answers += 1
+    return total_tokens / num_answers
 
 
 def tokenize_by_whitespace(text):
@@ -98,19 +106,23 @@ def get_avg_num_tokens_by_whitespace(dataset: List[Dict]) -> float:
 
 def get_avg_num_tokens_questions_by_whitespace(dataset: List[Dict]) -> float:
     total_tokens = 0
+    num_questions = 0
     for sample in dataset:
         for question in sample["questions"]:
             total_tokens += len(tokenize_by_whitespace(question))
-    return total_tokens / len(dataset)
+            num_questions += 1
+    return total_tokens / num_questions
 
 
 def get_avg_num_tokens_answers_by_whitespace(dataset: List[Dict]) -> float:
     total_tokens = 0
+    num_answers = 0
     for sample in dataset:
         for answer_data in sample["answers"]:
             answer = answer_data["answer"]
             total_tokens += len(tokenize_by_whitespace(answer))
-    return total_tokens / len(dataset)
+            num_answers += 1
+    return total_tokens / num_answers
 
 
 def get_avg_num_unique_tokens(dataset: List[Dict]) -> float:

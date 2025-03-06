@@ -1,15 +1,15 @@
 {
     "avg_doc_length": 51709.0,
-    "avg_question_length": 429.4,
-    "avg_answer_length": 384.0,
+    "avg_question_length": 36.0,
+    "avg_answer_length": 32.2,
     "avg_num_questions": 11.9,
     "num_documents": 685,
     "avg_num_tokens": 9842.1,
-    "avg_num_tokens_questions": 88.8,
-    "avg_num_tokens_answers": 74.0,
+    "avg_num_tokens_questions": 7.4,
+    "avg_num_tokens_answers": 6.2,
     "avg_num_tokens_by_whitespace": 8484.5,
-    "avg_num_tokens_questions_by_whitespace": 77.6,
-    "avg_num_tokens_answers_by_whitespace": 61.6,
+    "avg_num_tokens_questions_by_whitespace": 6.5,
+    "avg_num_tokens_answers_by_whitespace": 5.2,
     "avg_num_unique_tokens": 2782.5,
     "avg_num_unique_tokens_by_whitespace": 3265.3
 }
