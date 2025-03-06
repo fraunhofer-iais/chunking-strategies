@@ -1,0 +1,15 @@
+{
+    "avg_doc_length": 88991.1,
+    "avg_question_length": 47.3,
+    "avg_answer_length": 41.5,
+    "avg_num_questions": 1.0,
+    "num_documents": 25010,
+    "avg_num_tokens": 20637.5,
+    "avg_num_tokens_questions": 9.0,
+    "avg_num_tokens_answers": 7.7,
+    "avg_num_tokens_by_whitespace": 6918.2,
+    "avg_num_tokens_questions_by_whitespace": 9.0,
+    "avg_num_tokens_answers_by_whitespace": 6.8,
+    "avg_num_unique_tokens": 2939.8,
+    "avg_num_unique_tokens_by_whitespace": 2864.8
+}
