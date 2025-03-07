@@ -30,9 +30,17 @@ class RetrieverResult(BaseModel):
 
 class EvalResult(BaseModel):
     recall_at_k: List[float]
+
+
+class DocumentEvalResult(EvalResult):
     eval_sample: EvalSample
     retriever_results: List[RetrieverResult]
 
+
+class QuestionEvalResult(EvalResult):
+    document_id: str
+    question: str
+    
 
 class AverageDocResult(BaseModel):
     average_recall_at_k: List[float]

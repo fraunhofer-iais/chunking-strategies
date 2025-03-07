@@ -1,7 +1,7 @@
 import pytest
 
 from src.config.config import EvaluatorConfig
-from src.dto.dto import EvalResult, EvalSample, RetrieverResult, Answer
+from src.dto.dto import DocumentEvalResult, EvalSample, RetrieverResult, Answer
 from src.evaluator.evaluator import Evaluator
 
 
@@ -46,7 +46,7 @@ def test_evaluate(evaluator):
 
     result = evaluator.evaluate(eval_sample=eval_sample, retrieved_paragraphs=retrieved_paragraphs, k=5)
 
-    assert isinstance(result, EvalResult)
+    assert isinstance(result, DocumentEvalResult)
     assert result.recall_at_k == [1.0, 1.0, 1.0, 1.0, 1.0]
     assert result.eval_sample == eval_sample
     assert result.retriever_results == retrieved_paragraphs

@@ -48,6 +48,14 @@ class EvaluatorConfig(BaseModel):
     output_dir: str = "output"
 
 
+class DocumentEvaluatorConfig(EvaluatorConfig):
+    ...
+
+
+class QuestionEvaluatorConfig(EvaluatorConfig):
+    ...
+
+
 class DataHandlerConfig(BaseModel, ABC):
     ...
 
